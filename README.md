@@ -1,5 +1,14 @@
 # Novel Assessments
 
+Open-source cognitive and affective assessments for smartphone, tablet, and desktop.
+
+## Assessments
+
+| Assessment | Description | Live Demo |
+|-----------|-------------|-----------|
+| [MoodLine-OS](moodline-os/) | Visual analog mood scale (8 emotions) | [▶ Try it](https://andreifoldes.github.io/novel-assessments/moodline-os/) |
+
+
 A collection of short cognitive and affective web assessments, each as a self-contained subfolder mini web-app. Designed for use on smartphone, tablet, or desktop. Architecture inspired by the [m2c2kit](https://m2c2-project.github.io/m2c2kit-docs/) framework.
 
 ## Assessments

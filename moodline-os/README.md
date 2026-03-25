@@ -1,5 +1,7 @@
 # MoodLine-OS — Visual Analog Mood Assessment
 
+**[🔴 Live Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/)**
+
 Open-source visual analog mood assessment using emoji-based faces (Noto Emoji, Apache 2.0).
 
 > **Disclaimer:** This project is an independent implementation of the generic Visual Analog Scale (VAS) method for mood tracking. It is not affiliated with, endorsed by, or a derivative of the Visual Analog Mood Scales (VAMS) published by PAR, Inc.
