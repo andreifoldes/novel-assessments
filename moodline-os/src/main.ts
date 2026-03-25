@@ -27,7 +27,7 @@ function preloadFaces(): Promise<void> {
     const img = new Image();
     img.onload = () => resolve();
     img.onerror = () => resolve(); // don't block on error
-    img.src = `/faces/${name}.svg`;
+    img.src = `${import.meta.env.BASE_URL}faces/${name}.svg`;
   }));
   return Promise.all(promises).then(() => undefined);
 }
