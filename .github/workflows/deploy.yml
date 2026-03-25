@@ -37,13 +37,18 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Stage for Pages
+        run: |
+          mkdir -p /tmp/pages/moodline-os
+          cp -r dist/. /tmp/pages/moodline-os/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: moodline-os/dist
+          path: /tmp/pages
 
   deploy:
     name: Deploy
