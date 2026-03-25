@@ -108,7 +108,7 @@ function makeDemoSvg(name: string, label: string): string {
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
       <img
         class="instr-demo-face"
-        src="/faces/${name}.svg"
+        src="${import.meta.env.BASE_URL}faces/${name}.svg"
         alt="${label}"
         aria-hidden="true"
       />

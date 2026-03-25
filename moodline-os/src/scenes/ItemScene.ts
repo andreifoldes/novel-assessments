@@ -236,7 +236,7 @@ export class ItemScene {
               ${showLabels ? `<span class="item-face-label" aria-hidden="true">${topLabel}</span>` : ''}
               <img
                 class="item-face"
-                src="/faces/${topFaceName}.svg"
+                src="${import.meta.env.BASE_URL}faces/${topFaceName}.svg"
                 alt="${topLabel}"
                 draggable="false"
               />
@@ -273,7 +273,7 @@ export class ItemScene {
             <div class="item-face-wrap">
               <img
                 class="item-face"
-                src="/faces/${botFaceName}.svg"
+                src="${import.meta.env.BASE_URL}faces/${botFaceName}.svg"
                 alt="${botLabel}"
                 draggable="false"
               />
