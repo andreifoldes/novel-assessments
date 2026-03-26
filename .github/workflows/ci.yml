@@ -7,7 +7,40 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-affective-slider:
+    name: Build (affective-slider)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: affective-slider
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: affective-slider/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: affective-slider-dist
+          path: affective-slider/dist/
+          retention-days: 7
+
+  build-moodline-os:
     name: Build (moodline-os)
     runs-on: ubuntu-latest
 
