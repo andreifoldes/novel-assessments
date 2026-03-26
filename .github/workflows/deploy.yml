@@ -17,30 +17,35 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: moodline-os
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: moodline-os/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Build moodline-os
+        working-directory: moodline-os
+        run: |
+          npm ci
+          npm run build
+        env:
+          NODE_ENV: production
 
-      - name: Build
-        run: npm run build
+      - name: Build affective-slider
+        working-directory: affective-slider
+        run: |
+          npm ci
+          npm run build:static
         env:
           NODE_ENV: production
 
       - name: Stage for Pages
         run: |
           mkdir -p /tmp/pages/moodline-os
-          cp -r dist/. /tmp/pages/moodline-os/
+          cp -r moodline-os/dist/. /tmp/pages/moodline-os/
+          mkdir -p /tmp/pages/affective-slider
+          cp -r affective-slider/build/. /tmp/pages/affective-slider/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

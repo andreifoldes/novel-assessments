@@ -7,6 +7,7 @@
   "description": "AffectiveSlider — pleasure and arousal self-assessment implemented in m2c2kit with flexible orientation (horizontal / vertical)",
   "scripts": {
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "build:static": "npm run clean && rollup -c rollup.config.deploy.mjs",
     "serve": "concurrently \"rollup -c rollup.config.runner.mjs --watch\" \"tsc --project tsconfig.runner.json --watch\" --names rollup,typescript --prefix-colors auto,red",
     "clean": "rimraf build dist tsconfig.tsbuildinfo tsconfig.runner.tsbuildinfo"
   },

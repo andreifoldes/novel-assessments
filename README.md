@@ -4,18 +4,33 @@ Open-source cognitive and affective assessments for smartphone, tablet, and desk
 
 ## Assessments
 
-| Assessment | Description | Live Demo |
-|-----------|-------------|-----------|
-| [MoodLine-OS](moodline-os/) | Visual analog mood scale (8 emotions) | [▶ Try it](https://andreifoldes.github.io/novel-assessments/moodline-os/) |
+### [MoodLine-OS](moodline-os/)
 
+A mood rating tool that presents cartoon faces on a vertical line; the participant drags a marker to indicate how they feel right now. Designed for people with dementia and cognitive impairment — supports a `no-words` mode for those with communication difficulties.
 
-A collection of short cognitive and affective web assessments, each as a self-contained subfolder mini web-app. Designed for use on smartphone, tablet, or desktop. Architecture inspired by the [m2c2kit](https://m2c2-project.github.io/m2c2kit-docs/) framework.
+**[▶ Live Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/)**
 
-## Assessments
+Features:
+- 8 mood items: Scared, Muddled, Unhappy, Irritable, Weary, Anxious, Cheerful, Lively
+- Revised and standard administration modes
+- Configurable via URL parameters (`?items=`, `?mode=`, `?randomize=`, `?labels=`)
+- WCAG 2.1 AA accessible; keyboard navigable
 
-| Folder | Assessment | Reference |
-|--------|-----------|-----------|
-| [`moodline-os/`](./moodline-os/) | MoodLine-OS — Visual Analog Mood Assessment | Based on Kontou et al. (2012) |
+---
+
+### [Affective Slider](affective-slider/)
+
+A continuous two-dimensional self-assessment of emotional state (pleasure × arousal), implemented with the [m2c2kit](https://m2c2-project.github.io/m2c2kit-docs/) framework. Each dimension is rated on a 0–1 scale using a slider anchored by cartoon faces. Supports both horizontal and vertical orientations.
+
+**[▶ Live Demo](https://andreifoldes.github.io/novel-assessments/affective-slider/)**
+
+Features:
+- Pleasure slider (Scared ↔ Cheerful) and Arousal slider (Weary ↔ Lively)
+- Horizontal and vertical orientation support
+- Continuous 0–1 output; both sliders must be interacted with before submission
+- Built with m2c2kit for cross-device deployment
+
+---
 
 ## Design Principles
 
@@ -26,5 +41,4 @@ A collection of short cognitive and affective web assessments, each as a self-co
 
 ## Shared Resources
 
-- `shared/design-tokens.ts` — color palette, typography, spacing
 - `shared/faces/` — SVG cartoon face assets (9 mood states)
