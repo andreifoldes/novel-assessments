@@ -22,23 +22,19 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Build moodline-os
         working-directory: moodline-os
         run: |
           npm ci
-          npm run build
-        env:
-          NODE_ENV: production
+          NODE_ENV=production npm run build
 
       - name: Build affective-slider
         working-directory: affective-slider
         run: |
           npm ci
-          npm run build:static
-        env:
-          NODE_ENV: production
+          NODE_ENV=production npm run build:static
 
       - name: Stage for Pages
         run: |
