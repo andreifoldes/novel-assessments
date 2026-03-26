@@ -29,9 +29,10 @@ export default (commandLineArgs) => {
         // Copy the HTML entry point into build/
         copy({
           targets: [
+            { src: "./index.html", dest: "./build" },
             {
-              src: "./index.html",
-              dest: "./build",
+              src: "./fonts/Roboto-Regular.woff2",
+              dest: "./build/assets/affective-slider/fonts",
             },
           ],
           hook: "buildEnd",

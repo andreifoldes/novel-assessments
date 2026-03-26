@@ -22,6 +22,7 @@
   },
   "license": "CC-BY-SA-4.0",
   "dependencies": {
+    "@fontsource/roboto": "^5.2.10",
     "@m2c2kit/addons": "^0.3.35",
     "@m2c2kit/core": "^0.3.36"
   },

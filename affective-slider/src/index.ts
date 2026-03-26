@@ -154,6 +154,7 @@ with configurable presentation order and label display.`,
         { imageName: "face-tired", url: "faces/tired.svg", width: FACE_SIZE, height: FACE_SIZE },
         { imageName: "face-energetic", url: "faces/energetic.svg", width: FACE_SIZE, height: FACE_SIZE },
       ],
+      fonts: [{ fontName: "roboto", url: "fonts/Roboto-Regular.woff2" }],
     };
 
     super(options);
