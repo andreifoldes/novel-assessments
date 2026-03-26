@@ -45,9 +45,9 @@ export interface ScoredResults {
   };
 }
 
-const NEGATIVE_MOOD_IDS: ItemId[] = ['afraid', 'confused', 'sad', 'angry', 'tense'];
-const ENERGY_IDS: ItemId[] = ['tired', 'energetic'];
-const HAPPINESS_IDS: ItemId[] = ['happy'];
+const NEGATIVE_MOOD_IDS: ItemId[] = ['scared', 'muddled', 'unhappy', 'irritable', 'anxious'];
+const ENERGY_IDS: ItemId[] = ['weary', 'lively'];
+const HAPPINESS_IDS: ItemId[] = ['cheerful'];
 
 function sumIf(responses: ItemResponse[], ids: ItemId[]): number | null {
   const matching = responses.filter(r => ids.includes(r.id));

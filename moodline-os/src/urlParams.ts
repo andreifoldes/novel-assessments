@@ -9,14 +9,14 @@
  */
 
 export type ItemId =
-  | 'afraid'
-  | 'confused'
-  | 'sad'
-  | 'angry'
-  | 'tired'
-  | 'tense'
-  | 'happy'
-  | 'energetic';
+  | 'scared'
+  | 'muddled'
+  | 'unhappy'
+  | 'irritable'
+  | 'weary'
+  | 'anxious'
+  | 'cheerful'
+  | 'lively';
 
 export type Mode = 'revised' | 'standard';
 export type LabelMode = 'words' | 'no-words';
@@ -29,7 +29,7 @@ export interface AssessmentParams {
 }
 
 const ALL_ITEMS: ItemId[] = [
-  'afraid', 'confused', 'sad', 'angry', 'tired', 'tense', 'happy', 'energetic',
+  'scared', 'muddled', 'unhappy', 'irritable', 'weary', 'anxious', 'cheerful', 'lively',
 ];
 
 /** Fisher-Yates in-place shuffle */

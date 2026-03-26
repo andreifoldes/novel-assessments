@@ -144,11 +144,11 @@ export class InstructionScene {
         </p>
 
         <div class="instr-demo" aria-hidden="true">
-          ${makeDemoSvg('neutral', 'Neutral')}
+          ${makeDemoSvg('calm', 'Calm')}
           <div class="instr-demo-track">
             <div class="instr-demo-marker"></div>
           </div>
-          ${makeDemoSvg('sad', 'Sad')}
+          ${makeDemoSvg('unhappy', 'Unhappy')}
         </div>
 
         <p class="instr-hint">Move the circle up or down, then tap <strong>Next</strong>.</p>

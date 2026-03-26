@@ -11,12 +11,12 @@
  *   revisedReverse   — whether raw score should be reverse-coded in revised mode
  *
  * Revised mode key change:
- *   - 'happy' and 'energetic' have the positive face at TOP (not neutral)
- *   - All negative items retain neutral at top in both modes
+ *   - 'cheerful' and 'lively' have the positive face at TOP (not calm)
+ *   - All negative items retain calm at top in both modes
  *
  * Scoring convention: 0 = top of scale, 100 = bottom of scale.
- * For negative items: 0 = neutral (no distress), 100 = max distress.
- * For happy/energetic in revised mode: 0 = max positive, 100 = neutral → reverse-code.
+ * For negative items: 0 = calm (no distress), 100 = max distress.
+ * For cheerful/lively in revised mode: 0 = max positive, 100 = calm → reverse-code.
  */
 
 import type { ItemId } from './urlParams';
@@ -35,64 +35,64 @@ export interface MoodItem {
 }
 
 export const ITEMS: Record<ItemId, MoodItem> = {
-  afraid: {
-    id: 'afraid',
-    label: 'Afraid',
-    revisedTopFace: 'neutral', revisedBotFace: 'afraid',
-    standardTopFace: 'neutral', standardBotFace: 'afraid',
+  scared: {
+    id: 'scared',
+    label: 'Scared',
+    revisedTopFace: 'calm', revisedBotFace: 'scared',
+    standardTopFace: 'calm', standardBotFace: 'scared',
     revisedReverse: false,      standardReverse: false,
   },
-  confused: {
-    id: 'confused',
-    label: 'Confused',
-    revisedTopFace: 'neutral', revisedBotFace: 'confused',
-    standardTopFace: 'neutral', standardBotFace: 'confused',
+  muddled: {
+    id: 'muddled',
+    label: 'Muddled',
+    revisedTopFace: 'calm', revisedBotFace: 'muddled',
+    standardTopFace: 'calm', standardBotFace: 'muddled',
     revisedReverse: false,      standardReverse: false,
   },
-  sad: {
-    id: 'sad',
-    label: 'Sad',
-    revisedTopFace: 'neutral', revisedBotFace: 'sad',
-    standardTopFace: 'neutral', standardBotFace: 'sad',
+  unhappy: {
+    id: 'unhappy',
+    label: 'Unhappy',
+    revisedTopFace: 'calm', revisedBotFace: 'unhappy',
+    standardTopFace: 'calm', standardBotFace: 'unhappy',
     revisedReverse: false,      standardReverse: false,
   },
-  angry: {
-    id: 'angry',
-    label: 'Angry',
-    revisedTopFace: 'neutral', revisedBotFace: 'angry',
-    standardTopFace: 'neutral', standardBotFace: 'angry',
+  irritable: {
+    id: 'irritable',
+    label: 'Irritable',
+    revisedTopFace: 'calm', revisedBotFace: 'irritable',
+    standardTopFace: 'calm', standardBotFace: 'irritable',
     revisedReverse: false,      standardReverse: false,
   },
-  tired: {
-    id: 'tired',
-    label: 'Tired',
-    revisedTopFace: 'neutral', revisedBotFace: 'tired',
-    standardTopFace: 'neutral', standardBotFace: 'tired',
+  weary: {
+    id: 'weary',
+    label: 'Weary',
+    revisedTopFace: 'calm', revisedBotFace: 'weary',
+    standardTopFace: 'calm', standardBotFace: 'weary',
     revisedReverse: false,      standardReverse: false,
   },
-  tense: {
-    id: 'tense',
-    label: 'Tense',
-    revisedTopFace: 'neutral', revisedBotFace: 'tense',
-    standardTopFace: 'neutral', standardBotFace: 'tense',
+  anxious: {
+    id: 'anxious',
+    label: 'Anxious',
+    revisedTopFace: 'calm', revisedBotFace: 'anxious',
+    standardTopFace: 'calm', standardBotFace: 'anxious',
     revisedReverse: false,      standardReverse: false,
   },
-  happy: {
-    id: 'happy',
-    label: 'Happy',
-    // Revised: happy face at top, neutral at bottom
-    revisedTopFace: 'happy',   revisedBotFace: 'neutral',
-    // Standard: neutral at top, happy at bottom
-    standardTopFace: 'neutral', standardBotFace: 'happy',
+  cheerful: {
+    id: 'cheerful',
+    label: 'Cheerful',
+    // Revised: cheerful face at top, calm at bottom
+    revisedTopFace: 'cheerful', revisedBotFace: 'calm',
+    // Standard: calm at top, cheerful at bottom
+    standardTopFace: 'calm', standardBotFace: 'cheerful',
     revisedReverse: true,       standardReverse: false,
   },
-  energetic: {
-    id: 'energetic',
-    label: 'Energetic',
-    // Revised: energetic face at top, neutral at bottom
-    revisedTopFace: 'energetic', revisedBotFace: 'neutral',
-    // Standard: neutral at top, energetic at bottom
-    standardTopFace: 'neutral',  standardBotFace: 'energetic',
+  lively: {
+    id: 'lively',
+    label: 'Lively',
+    // Revised: lively face at top, calm at bottom
+    revisedTopFace: 'lively', revisedBotFace: 'calm',
+    // Standard: calm at top, lively at bottom
+    standardTopFace: 'calm',  standardBotFace: 'lively',
     revisedReverse: true,        standardReverse: false,
   },
 };

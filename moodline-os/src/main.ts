@@ -19,7 +19,7 @@ const app = document.getElementById('app') as HTMLElement;
 const params = parseParams();
 const responses: ItemResponse[] = [];
 
-const FACE_NAMES = ['neutral', 'afraid', 'confused', 'sad', 'angry', 'tired', 'tense', 'happy', 'energetic'];
+const FACE_NAMES = ['calm', 'scared', 'muddled', 'unhappy', 'irritable', 'weary', 'anxious', 'cheerful', 'lively'];
 
 /** Preload all face SVGs so they're in the browser cache before any scene renders. */
 function preloadFaces(): Promise<void> {

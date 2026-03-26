@@ -308,9 +308,9 @@ export class ItemScene {
   }
 
   private faceLabel(faceName: string, itemLabel: string, _isRevised: boolean, isTop: boolean): string {
-    if (faceName === 'neutral') return 'Neutral';
-    // Top face for positive items (happy/energetic) in revised mode shows the positive state
-    if (isTop && (faceName === 'happy' || faceName === 'energetic')) {
+    if (faceName === 'calm') return 'Calm';
+    // Top face for positive items (cheerful/lively) in revised mode shows the positive state
+    if (isTop && (faceName === 'cheerful' || faceName === 'lively')) {
       return faceName.charAt(0).toUpperCase() + faceName.slice(1);
     }
     return itemLabel;
