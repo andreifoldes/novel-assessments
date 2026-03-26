@@ -1,0 +1,7 @@
+node_modules/
+build/
+dist/
+tsconfig.tsbuildinfo
+tsconfig.runner.tsbuildinfo
+# assets/ is a legacy copy — canonical sources are in faces/
+assets/

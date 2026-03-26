@@ -1,0 +1,44 @@
+{
+  "name": "affective-slider",
+  "version": "0.1.0",
+  "m2c2kit": {
+    "assessmentId": "affective-slider"
+  },
+  "description": "AffectiveSlider — pleasure and arousal self-assessment implemented in m2c2kit with flexible orientation (horizontal / vertical)",
+  "scripts": {
+    "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "serve": "concurrently \"rollup -c rollup.config.runner.mjs --watch\" \"tsc --project tsconfig.runner.json --watch\" --names rollup,typescript --prefix-colors auto,red",
+    "clean": "rimraf build dist tsconfig.tsbuildinfo tsconfig.runner.tsbuildinfo"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "license": "CC-BY-SA-4.0",
+  "dependencies": {
+    "@m2c2kit/addons": "^0.3.35",
+    "@m2c2kit/core": "^0.3.36"
+  },
+  "devDependencies": {
+    "@m2c2kit/build-helpers": "^0.3.32",
+    "@m2c2kit/session": "^0.3.18",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "concurrently": "^9.1.2",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.0.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-serve": "^2.0.2",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
