@@ -171,6 +171,7 @@ interface ItemSceneOptions {
   item: ItemId;
   mode: Mode;
   labels: LabelMode;
+  faceSet: string;
   index: number;
   total: number;
   onNext: (response: ItemResponse) => void;
@@ -236,7 +237,7 @@ export class ItemScene {
               ${showLabels ? `<span class="item-face-label" aria-hidden="true">${topLabel}</span>` : ''}
               <img
                 class="item-face"
-                src="${import.meta.env.BASE_URL}faces/${topFaceName}.svg"
+                src="${import.meta.env.BASE_URL}${this.opts.faceSet}/${topFaceName}.svg"
                 alt="${topLabel}"
                 draggable="false"
               />
@@ -273,7 +274,7 @@ export class ItemScene {
             <div class="item-face-wrap">
               <img
                 class="item-face"
-                src="${import.meta.env.BASE_URL}faces/${botFaceName}.svg"
+                src="${import.meta.env.BASE_URL}${this.opts.faceSet}/${botFaceName}.svg"
                 alt="${botLabel}"
                 draggable="false"
               />

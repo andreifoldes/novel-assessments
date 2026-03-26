@@ -27,7 +27,7 @@ function preloadFaces(): Promise<void> {
     const img = new Image();
     img.onload = () => resolve();
     img.onerror = () => resolve(); // don't block on error
-    img.src = `${import.meta.env.BASE_URL}faces/${name}.svg`;
+    img.src = `${import.meta.env.BASE_URL}${params.faceSet}/${name}.svg`;
   }));
   return Promise.all(promises).then(() => undefined);
 }
@@ -51,6 +51,7 @@ function showItem(index: number): void {
     item: itemId,
     mode: params.mode,
     labels: params.labels,
+    faceSet: params.faceSet,
     index,
     total: params.items.length,
     onNext: (response) => {

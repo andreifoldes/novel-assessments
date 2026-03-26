@@ -103,12 +103,12 @@ const STYLES = `
   }
 `;
 
-function makeDemoSvg(name: string, label: string): string {
+function makeDemoSvg(name: string, label: string, faceSet: string): string {
   return `
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
       <img
         class="instr-demo-face"
-        src="${import.meta.env.BASE_URL}faces/${name}.svg"
+        src="${import.meta.env.BASE_URL}${faceSet}/${name}.svg"
         alt="${label}"
         aria-hidden="true"
       />
@@ -119,10 +119,12 @@ function makeDemoSvg(name: string, label: string): string {
 
 export class InstructionScene {
   private container: HTMLElement;
+  private faceSet: string;
   private onStart: () => void;
 
-  constructor(container: HTMLElement, _params: AssessmentParams, onStart: () => void) {
+  constructor(container: HTMLElement, params: AssessmentParams, onStart: () => void) {
     this.container = container;
+    this.faceSet = params.faceSet;
     this.onStart = onStart;
   }
 
@@ -144,11 +146,11 @@ export class InstructionScene {
         </p>
 
         <div class="instr-demo" aria-hidden="true">
-          ${makeDemoSvg('calm', 'Calm')}
+          ${makeDemoSvg('calm', 'Calm', this.faceSet)}
           <div class="instr-demo-track">
             <div class="instr-demo-marker"></div>
           </div>
-          ${makeDemoSvg('unhappy', 'Unhappy')}
+          ${makeDemoSvg('unhappy', 'Unhappy', this.faceSet)}
         </div>
 
         <p class="instr-hint">Move the circle up or down, then tap <strong>Next</strong>.</p>
