@@ -281,6 +281,37 @@ with configurable presentation order and label display.`,
       );
     }
 
+    // ── Thank you scene ───────────────────────────────────────────────────────
+    const thankYouScene = new Scene({ backgroundColor: GREY_BG });
+    game.addScene(thankYouScene);
+
+    thankYouScene.addChild(new Label({
+      text: "Thank you!",
+      fontSize: 32,
+      fontColor: GREY_DARK,
+      position: { x: CANVAS_W / 2, y: CANVAS_H / 2 - 60 },
+    }));
+
+    thankYouScene.addChild(new Label({
+      text: "Your responses have been recorded.",
+      fontSize: 16,
+      fontColor: GREY_MID,
+      position: { x: CANVAS_W / 2, y: CANVAS_H / 2 },
+    }));
+
+    // Decorative checkmark circle
+    thankYouScene.addChild(new Shape({
+      circleOfRadius: 36,
+      fillColor: GREY_DARK,
+      position: { x: CANVAS_W / 2, y: CANVAS_H / 2 - 140 },
+    }));
+    thankYouScene.addChild(new Label({
+      text: "✓",
+      fontSize: 36,
+      fontColor: WHITE,
+      position: { x: CANVAS_W / 2, y: CANVAS_H / 2 - 140 },
+    }));
+
     // ── Submit handler ────────────────────────────────────────────────────────
     submitButton.onTapDown(() => {
       const responseMs = Timer.elapsed("ratingTimer");
@@ -296,7 +327,18 @@ with configurable presentation order and label display.`,
       game.addTrialData("response_time_ms", responseMs);
 
       game.trialComplete();
-      game.end();
+      game.presentScene(thankYouScene);
+    });
+
+    thankYouScene.onAppear(() => {
+      // End the game 2.5 s after the thank-you screen appears so the
+      // participant has time to read it before the session closes.
+      thankYouScene.run(
+        Action.sequence([
+          Action.wait({ duration: 2500 }),
+          Action.custom({ callback: () => { game.end(); } }),
+        ])
+      );
     });
 
     ratingScene.onAppear(() => {
