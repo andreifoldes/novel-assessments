@@ -21,7 +21,7 @@ Features:
 
 | Set | Demo | Style |
 |-----|------|-------|
-| `faces` (default) | [▶ Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/) | Coloured cartoon SVGs |
+| `noto` (default) | [▶ Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/) | Coloured cartoon SVGs |
 | `claude-drawn` | [▶ Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/?faces=claude-drawn) | Minimalist ink line-art (56×56, no colour fills) |
 
 ---

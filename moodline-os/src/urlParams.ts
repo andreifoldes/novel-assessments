@@ -6,8 +6,8 @@
  *   mode       "revised" (default) | "standard"
  *   randomize  "true" | "false" (default false)
  *   labels     "words" (default) | "no-words"
- *   faces      asset subfolder under public/, default = "faces"
- *              e.g. ?faces=noto or ?faces=ai-drawn
+ *   faces      asset subfolder under public/, default = "noto"
+ *              e.g. ?faces=noto or ?faces=claude-drawn
  */
 
 export type ItemId =
@@ -28,7 +28,7 @@ export interface AssessmentParams {
   mode: Mode;
   randomize: boolean;
   labels: LabelMode;
-  /** Subfolder under public/ containing the face SVGs, e.g. "faces", "noto", "ai-drawn" */
+  /** Subfolder under public/ containing the face SVGs, e.g. "noto", "claude-drawn", "ai-drawn" */
   faceSet: string;
 }
 
@@ -77,7 +77,7 @@ export function parseParams(): AssessmentParams {
   // --- faces ---
   const facesRaw = p.get('faces')?.trim();
   // Strip leading/trailing slashes and fall back to the default folder name
-  const faceSet = facesRaw ? facesRaw.replace(/^\/+|\/+$/g, '') : 'faces';
+  const faceSet = facesRaw ? facesRaw.replace(/^\/+|\/+$/g, '') : 'noto';
 
   return { items, mode, randomize, labels, faceSet };
 }
