@@ -6,6 +6,9 @@
  *
  * URL parameters are forwarded to the game as GameParameters, e.g.:
  *   ?orientation=vertical&randomize_order=true&show_labels=false
+ *
+ * Integration parameters (handled by this runner, not the game):
+ *   ?callback_url=<url>&token=<token>  — POST results to URL on completion.
  */
 
 import { Session } from "@m2c2kit/session";
@@ -13,11 +16,13 @@ import { AffectiveSliderGame } from "./index";
 
 const game = new AffectiveSliderGame();
 
-// Forward URL query parameters to the game
 const urlParams = new URLSearchParams(window.location.search);
+
+// Forward URL query parameters to the game (skip integration-only params)
+const RUNNER_PARAMS = new Set(['callback_url', 'token']);
 const gameParameters: Record<string, string> = {};
 urlParams.forEach((value, key) => {
-  gameParameters[key] = value;
+  if (!RUNNER_PARAMS.has(key)) gameParameters[key] = value;
 });
 game.setParameters(gameParameters);
 
@@ -27,6 +32,23 @@ const session = new Session({
 
 session.onActivityData((ev) => {
   console.log("[AffectiveSlider] trial data:", JSON.stringify(ev.newData, null, 2));
+
+  const callbackUrl = urlParams.get('callback_url');
+  const token = urlParams.get('token');
+
+  // Notify parent frame (PWA wrapper listens for this)
+  const msg = { type: 'NOVEL_COMPLETE', assessment: 'affective-slider', data: ev.newData };
+  if (window.parent !== window) {
+    window.parent.postMessage(msg, '*');
+  }
+
+  if (callbackUrl && token) {
+    fetch(callbackUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, data: ev.newData }),
+    }).catch(err => console.warn('[AffectiveSlider] Callback failed:', err));
+  }
 });
 
 session.onEnd(() => {

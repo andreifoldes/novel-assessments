@@ -1,5 +1,10 @@
 /**
- * CompleteScene — Thank-you screen with JSON data export.
+ * CompleteScene — Thank-you screen with JSON data export and optional callback.
+ *
+ * If the page was launched with `?callback_url=<url>&token=<token>` query params,
+ * results are POSTed to that URL on completion (used by the iema-bot integration).
+ * A `postMessage({ type: 'NOVEL_COMPLETE', data })` is also fired so parent
+ * iframes (e.g. the PWA wrapper) can react without polling.
  */
 
 import type { ScoredResults } from '../scoring';
@@ -84,6 +89,29 @@ export class CompleteScene {
     const btn = this.container.querySelector<HTMLButtonElement>('#download-btn')!;
     btn.addEventListener('click', () => this.download());
     setTimeout(() => btn.focus(), 50);
+
+    this.submitCallback();
+  }
+
+  /** POST results to callback_url if provided, and notify any parent iframe. */
+  private submitCallback(): void {
+    const p = new URLSearchParams(window.location.search);
+    const callbackUrl = p.get('callback_url');
+    const token = p.get('token');
+
+    // Notify parent frame regardless (PWA wrapper listens for this)
+    const msg = { type: 'NOVEL_COMPLETE', assessment: 'moodline-os', data: this.results };
+    if (window.parent !== window) {
+      window.parent.postMessage(msg, '*');
+    }
+
+    if (!callbackUrl || !token) return;
+
+    fetch(callbackUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, data: this.results }),
+    }).catch(err => console.warn('[MoodLine-OS] Callback failed:', err));
   }
 
   private download(): void {
