@@ -27,6 +27,10 @@ export default [
             src: "./fonts/Roboto-Regular.woff2",
             dest: "./build/assets/affective-slider/fonts",
           },
+          {
+            src: "./faces/*.svg",
+            dest: "./build/assets/affective-slider/faces",
+          },
         ],
         hook: "buildEnd",
       }),
