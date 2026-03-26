@@ -15,6 +15,14 @@ Features:
 - Revised and standard administration modes
 - Configurable via URL parameters (`?items=`, `?mode=`, `?randomize=`, `?labels=`)
 - WCAG 2.1 AA accessible; keyboard navigable
+- Swappable face asset sets via `?faces=` parameter
+
+**Face asset sets:**
+
+| Set | Demo | Style |
+|-----|------|-------|
+| `faces` (default) | [▶ Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/) | Coloured cartoon SVGs |
+| `claude-drawn` | [▶ Demo](https://andreifoldes.github.io/novel-assessments/moodline-os/?faces=claude-drawn) | Minimalist ink line-art (56×56, no colour fills) |
 
 ---
 
