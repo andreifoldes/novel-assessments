@@ -32,7 +32,7 @@ import {
   Timer,
   Constants,
 } from "@m2c2kit/core";
-import { Button, Instructions, Slider } from "@m2c2kit/addons";
+import { Button, Slider } from "@m2c2kit/addons";
 import { VerticalSlider } from "./VerticalSlider";
 import type { SliderState } from "./types";
 
@@ -55,6 +55,9 @@ const FACE_SIZE = 64;
  *  depends on device DPI — canvaskit scales correctly on high-DPI screens). */
 const TRACK_LENGTH = 200;
 
+/** Height (px) of the bow-tie track at its wide ends; it tapers to a point in the middle. */
+const BOWTIE_HEIGHT = 22;
+
 class AffectiveSliderGame extends Game {
   constructor() {
     const defaultParameters: GameParameters = {
@@ -72,9 +75,10 @@ class AffectiveSliderGame extends Game {
       },
       show_labels: {
         type: "boolean",
-        default: true,
+        default: false,
         description:
-          'Show verbal labels beside the faces (e.g. "Sad / Happy", "Sleepy / Wide Awake").',
+          'Show verbal labels beside the faces (e.g. "Unhappy / Happy", "Tired / Awake"). '
+          + "The original AS relies on the emoticon faces alone, so this is off by default.",
       },
       require_both_interactions: {
         type: "boolean",
@@ -146,6 +150,9 @@ with configurable presentation order and label display.`,
       showFps: defaultParameters.show_fps.default as boolean,
       width: CANVAS_W,
       height: CANVAS_H,
+      // Scale the fixed 9:16 canvas up/down to fill any viewport (phone, tablet,
+      // desktop, and the full-screen ESMira iframe), preserving aspect ratio.
+      stretch: true,
       trialSchema,
       parameters: defaultParameters,
       images: [
@@ -164,35 +171,15 @@ with configurable presentation order and label display.`,
     await super.initialize();
     const game = this;
 
-    // ── Instruction scenes ────────────────────────────────────────────────────
-    const instructionScenes = Instructions.create({
-      instructionScenes: [
-        {
-          title: "How are you feeling?",
-          text: "You will rate your current emotional state using two sliders.\n\nDrag each slider to show how you feel right now.",
-          textFontSize: 18,
-          titleFontSize: 24,
-        },
-        {
-          title: "Two dimensions",
-          text: "The first slider measures your pleasure — from sad to happy.\n\nThe second measures your arousal — from sleepy to wide awake.\n\nBoth sliders start in the middle.",
-          textFontSize: 17,
-          titleFontSize: 22,
-          nextButtonText: "Start",
-          nextButtonBackgroundColor: GREY_DARK,
-        },
-      ],
-    });
-    game.addScenes(instructionScenes);
-
-    // ── Rating scene ──────────────────────────────────────────────────────────
+    // ── Rating scene (single screen; the task launches straight into this) ─────
     const ratingScene = new Scene({ backgroundColor: GREY_BG });
     game.addScene(ratingScene);
 
-    // Determine presentation order
-    const pleasureFirst =
-      !game.getParameter<boolean>("randomize_order") ||
-      Math.random() >= 0.5;
+    // Determine presentation order. Default (no randomization) mirrors the
+    // classic AS layout with the arousal slider on top, pleasure below.
+    const pleasureFirst = game.getParameter<boolean>("randomize_order")
+      ? Math.random() >= 0.5
+      : false;
 
     // State for each dimension
     const pleasureState: SliderState = { value: 0.5, interacted: false, firstInteractionMs: null };
@@ -363,36 +350,50 @@ function buildHorizontalLayout(
   submitButton: Button,
   hintLabel: Label
 ): void {
+  const pleasureDim = {
+    question: "How unhappy or happy do you feel right now?",
+    lowFace: "face-sad", highFace: "face-happy",
+    lowText: "Unhappy", highText: "Happy", state: pleasureState,
+  };
+  const arousalDim = {
+    question: "How tired or awake do you feel right now?",
+    lowFace: "face-tired", highFace: "face-energetic",
+    lowText: "Tired", highText: "Awake", state: arousalState,
+  };
   const dimensions = pleasureFirst
-    ? [
-        { label: "Pleasure", lowFace: "face-sad", highFace: "face-happy", lowText: "Sad", highText: "Happy", state: pleasureState },
-        { label: "Arousal", lowFace: "face-tired", highFace: "face-energetic", lowText: "Sleepy", highText: "Wide Awake", state: arousalState },
-      ]
-    : [
-        { label: "Arousal", lowFace: "face-tired", highFace: "face-energetic", lowText: "Sleepy", highText: "Wide Awake", state: arousalState },
-        { label: "Pleasure", lowFace: "face-sad", highFace: "face-happy", lowText: "Sad", highText: "Happy", state: pleasureState },
-      ];
+    ? [pleasureDim, arousalDim]
+    : [arousalDim, pleasureDim];
 
-  const rowY = [200, 380];
+  // Top instruction, on the rating canvas itself (as in the original AS).
+  scene.addChild(new Label({
+    text:
+      "Using the two sliders, please tell us how you are feeling right now, "
+      + "at this moment.",
+    fontSize: 18,
+    fontColor: GREY_DARK,
+    preferredMaxLayoutWidth: 310,
+    position: { x: CANVAS_W / 2, y: 58 },
+  }));
+
+  const rowY = [235, 410];
 
   dimensions.forEach((dim, i) => {
     const y = rowY[i];
 
-    // Dimension label
-    const titleLabel = new Label({
-      text: dim.label,
-      fontSize: 15,
+    // Question prompt above the slider row
+    scene.addChild(new Label({
+      text: dim.question,
+      fontSize: 16,
       fontColor: GREY_DARK,
+      preferredMaxLayoutWidth: 330,
       position: { x: CANVAS_W / 2, y: y - 56 },
-    });
-    scene.addChild(titleLabel);
+    }));
 
     // Low-end face
-    const lowFace = new Sprite({
+    scene.addChild(new Sprite({
       imageName: dim.lowFace,
       position: { x: 36, y },
-    });
-    scene.addChild(lowFace);
+    }));
 
     if (showLabels) {
       scene.addChild(new Label({
@@ -404,11 +405,10 @@ function buildHorizontalLayout(
     }
 
     // High-end face
-    const highFace = new Sprite({
+    scene.addChild(new Sprite({
       imageName: dim.highFace,
       position: { x: CANVAS_W - 36, y },
-    });
-    scene.addChild(highFace);
+    }));
 
     if (showLabels) {
       scene.addChild(new Label({
@@ -419,12 +419,28 @@ function buildHorizontalLayout(
       }));
     }
 
-    // Horizontal slider (built-in m2c2kit Slider, scale 0–100 → normalized ÷100)
+    // Bow-tie track: two filled triangles, wide at the ends and pinched at the
+    // centre, matching the original AffectiveSlider gradient bar.
+    const cx = TRACK_LENGTH / 2;
+    const bh = BOWTIE_HEIGHT;
+    const bowtiePath =
+      `M 0 0 L 0 ${bh} L ${cx} ${bh / 2} Z `
+      + `M ${TRACK_LENGTH} 0 L ${TRACK_LENGTH} ${bh} L ${cx} ${bh / 2} Z`;
+    scene.addChild(new Shape({
+      path: { pathString: bowtiePath },
+      fillColor: GREY_TRACK,
+      strokeColor: [0, 0, 0, 0], // suppress the default path stroke
+      lineWidth: 0,
+      position: { x: CANVAS_W / 2, y },
+    }));
+
+    // Interactive slider on top, with a transparent track (the bow-tie shows
+    // through) and a dark round thumb. Scale 0–100 → normalized ÷100.
     const slider = new Slider({
       trackSize: { width: TRACK_LENGTH, height: 8 },
-      trackColor: GREY_TRACK,
-      thumbSize: { width: 12, height: 36 },
-      thumbColor: GREY_LIGHT,
+      trackColor: [0, 0, 0, 0],
+      thumbSize: { width: 22, height: 22 },
+      thumbColor: GREY_DARK,
       min: 0,
       max: 100,
       value: 50,
