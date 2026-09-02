@@ -44,12 +44,22 @@ const GREY_BG: [number, number, number, number] = [248, 248, 248, 1];
 const GREY_TRACK: [number, number, number, number] = [150, 150, 150, 1];
 const WHITE: [number, number, number, number] = [255, 255, 255, 1];
 
+/** Submit button color once enabled. The greyscale AS spec applies to the
+ *  rating scales themselves; the button is auxiliary chrome. */
+const GREEN_ENABLED: [number, number, number, number] = [67, 160, 71, 1];
+
 /** Physical size of the canvas in logical pixels. Aspect ratio 9:16 (phone). */
 const CANVAS_W = 360;
 const CANVAS_H = 640;
 
 /** Face image side length in logical pixels. */
 const FACE_SIZE = 64;
+
+/** m2c2kit rasterizes SVGs once at declared size × devicePixelRatio and never
+ *  accounts for the stretch-to-viewport factor (rootScale), so faces loaded at
+ *  FACE_SIZE look pixelated on tablets/desktops where the canvas is scaled up
+ *  2–3×. Rasterize at this multiple and scale the Sprite down to compensate. */
+const FACE_RASTER_SCALE = 4;
 
 /** Track length in logical pixels (≈100 mm at ~96 dpi; actual physical size
  *  depends on device DPI — canvaskit scales correctly on high-DPI screens). */
@@ -156,10 +166,10 @@ with configurable presentation order and label display.`,
       trialSchema,
       parameters: defaultParameters,
       images: [
-        { imageName: "face-sad", url: "faces/sad.svg", width: FACE_SIZE, height: FACE_SIZE },
-        { imageName: "face-happy", url: "faces/happy.svg", width: FACE_SIZE, height: FACE_SIZE },
-        { imageName: "face-tired", url: "faces/tired.svg", width: FACE_SIZE, height: FACE_SIZE },
-        { imageName: "face-energetic", url: "faces/energetic.svg", width: FACE_SIZE, height: FACE_SIZE },
+        { imageName: "face-sad", url: "faces/sad.svg", width: FACE_SIZE * FACE_RASTER_SCALE, height: FACE_SIZE * FACE_RASTER_SCALE },
+        { imageName: "face-happy", url: "faces/happy.svg", width: FACE_SIZE * FACE_RASTER_SCALE, height: FACE_SIZE * FACE_RASTER_SCALE },
+        { imageName: "face-tired", url: "faces/tired.svg", width: FACE_SIZE * FACE_RASTER_SCALE, height: FACE_SIZE * FACE_RASTER_SCALE },
+        { imageName: "face-energetic", url: "faces/energetic.svg", width: FACE_SIZE * FACE_RASTER_SCALE, height: FACE_SIZE * FACE_RASTER_SCALE },
       ],
       fonts: [{ fontName: "roboto", url: "fonts/Roboto-Regular.woff2" }],
     };
@@ -218,7 +228,7 @@ with configurable presentation order and label display.`,
         ? pleasureState.interacted && arousalState.interacted
         : pleasureState.interacted || arousalState.interacted;
       submitButton.isUserInteractionEnabled = canSubmit;
-      submitButton.backgroundColor = canSubmit ? GREY_DARK : GREY_MID;
+      submitButton.backgroundColor = canSubmit ? GREEN_ENABLED : GREY_MID;
       hintLabel.hidden = canSubmit;
     }
 
@@ -334,6 +344,37 @@ with configurable presentation order and label display.`,
   }
 }
 
+// ── Attention halo ────────────────────────────────────────────────────────────
+
+/**
+ * Soft grey disc behind a slider thumb that gently pulses (alpha up/down) to
+ * signal "drag me" until the participant first touches that slider.
+ */
+function createThumbHalo(radius: number, position: { x: number; y: number }): Shape {
+  const halo = new Shape({
+    circleOfRadius: radius,
+    fillColor: GREY_MID,
+    alpha: 0.12,
+    position,
+  });
+  halo.run(
+    Action.repeatForever({
+      action: Action.sequence([
+        Action.fadeAlpha({ alpha: 0.4, duration: 800 }),
+        Action.fadeAlpha({ alpha: 0.12, duration: 800 }),
+      ]),
+    }),
+    "haloPulse"
+  );
+  return halo;
+}
+
+/** Stops the pulse and fades the halo out; called on first slider interaction. */
+function dismissThumbHalo(halo: Shape): void {
+  halo.removeAction("haloPulse");
+  halo.run(Action.fadeAlpha({ alpha: 0, duration: 300 }));
+}
+
 // ── Layout builders ───────────────────────────────────────────────────────────
 
 /**
@@ -389,10 +430,11 @@ function buildHorizontalLayout(
       position: { x: CANVAS_W / 2, y: y - 56 },
     }));
 
-    // Low-end face
+    // Low-end face (rasterized oversized; scaled down to FACE_SIZE on screen)
     scene.addChild(new Sprite({
       imageName: dim.lowFace,
       position: { x: 36, y },
+      scale: 1 / FACE_RASTER_SCALE,
     }));
 
     if (showLabels) {
@@ -408,6 +450,7 @@ function buildHorizontalLayout(
     scene.addChild(new Sprite({
       imageName: dim.highFace,
       position: { x: CANVAS_W - 36, y },
+      scale: 1 / FACE_RASTER_SCALE,
     }));
 
     if (showLabels) {
@@ -434,6 +477,10 @@ function buildHorizontalLayout(
       position: { x: CANVAS_W / 2, y },
     }));
 
+    // Pulsing halo behind the thumb's start position, dismissed on first touch
+    const halo = createThumbHalo(20, { x: CANVAS_W / 2, y });
+    scene.addChild(halo);
+
     // Interactive slider on top, with a transparent track (the bow-tie shows
     // through) and a dark round thumb. Scale 0–100 → normalized ÷100.
     const slider = new Slider({
@@ -448,7 +495,14 @@ function buildHorizontalLayout(
     });
     scene.addChild(slider);
 
-    slider.onValueChanged((e) => onChange(dim.state, e.value, true));
+    let haloVisible = true;
+    slider.onValueChanged((e) => {
+      if (haloVisible) {
+        haloVisible = false;
+        dismissThumbHalo(halo);
+      }
+      onChange(dim.state, e.value, true);
+    });
   });
 
   scene.addChild(hintLabel);
@@ -519,10 +573,11 @@ function buildVerticalLayout(
       position: { x, y: 60 },
     }));
 
-    // Top face (high end)
+    // Top face (high end; rasterized oversized, scaled down to FACE_SIZE)
     scene.addChild(new Sprite({
       imageName: dim.topFace,
       position: { x, y: 110 },
+      scale: 1 / FACE_RASTER_SCALE,
     }));
 
     if (showLabels) {
@@ -533,6 +588,10 @@ function buildVerticalLayout(
         position: { x, y: 110 + FACE_SIZE / 2 + 10 },
       }));
     }
+
+    // Pulsing halo behind the thumb's start position, dismissed on first touch
+    const halo = createThumbHalo(28, { x, y: centerY });
+    scene.addChild(halo);
 
     // Vertical slider — value 0 = top, 1 = bottom
     const vSlider = new VerticalSlider({
@@ -547,7 +606,12 @@ function buildVerticalLayout(
     });
     scene.addChild(vSlider);
 
+    let haloVisible = true;
     vSlider.onValueChanged((e) => {
+      if (haloVisible) {
+        haloVisible = false;
+        dismissThumbHalo(halo);
+      }
       // If top = high end, invert so 0 (top) → 1 (maximum) for the caller
       const adjusted = dim.invertValue ? 1 - e.value : e.value;
       onChange(dim.state, adjusted, false);
@@ -557,6 +621,7 @@ function buildVerticalLayout(
     scene.addChild(new Sprite({
       imageName: dim.bottomFace,
       position: { x, y: centerY + TRACK_LENGTH / 2 + FACE_SIZE / 2 + 8 },
+      scale: 1 / FACE_RASTER_SCALE,
     }));
 
     if (showLabels) {
