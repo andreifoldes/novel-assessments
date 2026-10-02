@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULTS, parseParams, safeImageUrl } from "./params.js";
+import { DEFAULTS, MODES, parseParams, safeImageUrl } from "./params.js";
 
 test("defaults", () => {
   const p = parseParams("");
@@ -26,4 +26,9 @@ test("only http(s) images are allowed", () => {
   assert.equal(safeImageUrl("data:text/html,x"), "");
   assert.equal(safeImageUrl("not a url"), "");
   assert.equal(safeImageUrl("https://a.example/p.jpg"), "https://a.example/p.jpg");
+});
+
+test("all four modes are accepted, anything else falls back to choice", () => {
+  for (const m of MODES) assert.equal(parseParams(`?mode=${m}`).mode, m);
+  assert.equal(parseParams("?mode=audio").mode, "choice");
 });

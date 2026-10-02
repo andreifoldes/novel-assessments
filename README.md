@@ -42,7 +42,7 @@ URL parameters (all optional):
 
 | Parameter | Meaning |
 |---|---|
-| `mode` | `voice`, `text` or `choice` (default: voice with a "write instead" button) |
+| `mode` | `choice` (default): start screen offering both. `voice_first`: voice recorder opens straight away, with a "Write instead" fallback. `voice`: audio only. `text`: writing only |
 | `prompt` | Instruction text (plain text) |
 | `image` | http(s) image URL, shown once the task starts |
 | `max_seconds` | Voice recording cap (default 300) |

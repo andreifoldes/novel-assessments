@@ -235,7 +235,6 @@ $("save").onclick = saveVoice;
 
 function openVoice() {
   show("voice"); showImages();
-  $("title").textContent = "Voice memo";
   $("timer").textContent = "00:00";
   startRecording();
 }
@@ -282,7 +281,6 @@ function bindTextarea() {
 function openText() {
   releaseMedia();
   show("text"); showImages();
-  $("title").textContent = "Write your answer";
   bindTextarea();
   $("area").focus();
 }
@@ -310,6 +308,12 @@ $("voiceToText").onclick = openText;
 $("textToVoice").onclick = openVoice;
 window.addEventListener("pagehide", releaseMedia);
 
-if (P.mode === "voice") { $("chooseText").hidden = true; $("voiceToText").hidden = true; }
-if (P.mode === "text") { $("chooseVoice").hidden = true; $("textToVoice").hidden = true; }
-if (P.mode !== "choice") { P.mode === "voice" ? openVoice() : openText(); } else show("start");
+const voiceOnly = P.mode === "voice";
+const textOnly = P.mode === "text";
+$("chooseText").hidden = voiceOnly;
+$("voiceToText").hidden = voiceOnly;
+$("chooseVoice").hidden = textOnly;
+$("textToVoice").hidden = textOnly;
+if (P.mode === "choice") show("start");
+else if (textOnly) openText();
+else openVoice(); // voice and voice_first (the latter keeps the "Write instead" button)
