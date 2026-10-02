@@ -1,9 +1,9 @@
 /** URL parameters for the reflection task (all optional). */
 
 /**
- * voice_first  opens the voice recorder straight away, with a "Write instead" fallback (default)
+ * voice_first  opens in voice mode (tap "Start recording"), with a "Write instead" fallback (default)
  * choice       start screen offering both
- * voice        audio only, no written fallback
+ * voice        voice mode only, no written fallback
  * text         writing only
  */
 export const MODES = ["voice_first", "choice", "voice", "text"];
