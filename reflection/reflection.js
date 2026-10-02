@@ -2,6 +2,9 @@ import { KeystrokeRecorderCore } from "./keystroke-capture.js";
 import { parseParams, safeImageUrl } from "./params.js";
 
 const P = parseParams(location.search);
+// Inside a Telegram Mini App (initData is only set there) hand control back to the chat when done.
+const tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
 const $ = (id) => document.getElementById(id);
 const IDLE_GAP_MS = 8000; // longer gaps do not count as active writing time
 const IDLE_HINT_MS = 12000;
@@ -71,6 +74,7 @@ async function send(result) {
 function finish(result) {
   $("doneMsg").textContent = "Thank you. You can return to the app.";
   emit(result.summary, result.trial);
+  if (tg && P.callbackUrl) setTimeout(() => tg.close(), 800);
 }
 
 function offerDownloads(result) {

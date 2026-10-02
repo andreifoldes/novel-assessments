@@ -42,7 +42,7 @@ URL parameters (all optional):
 
 | Parameter | Meaning |
 |---|---|
-| `mode` | `choice` (default): start screen offering both. `voice_first`: voice recorder opens straight away, with a "Write instead" fallback. `voice`: audio only. `text`: writing only |
+| `mode` | `voice_first` (default): voice recorder opens straight away, with a "Write instead" fallback. `choice`: start screen offering both. `voice`: audio only. `text`: writing only |
 | `prompt` | Instruction text (plain text) |
 | `image` | http(s) image URL, shown once the task starts |
 | `max_seconds` | Voice recording cap (default 300) |
@@ -54,6 +54,7 @@ Result delivery on completion:
 - **Voice:** `POST callback_url` with the raw audio as the body; `Content-Type` is the recording's MIME type, plus `X-Duration` (seconds) and `X-Token` headers.
 - **Text:** `POST callback_url` with JSON `{"token", "data": {mode, transcript, keystroke_csv, capture_mode, active_writing_s, n_chars}}`. The log is a CSV with columns `class,hold,release,press` (seconds from the first event).
 - Without `callback_url` the result is offered as downloads.
+- Opened as a Telegram Mini App, the page closes itself after a successful send.
 
 ---
 

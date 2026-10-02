@@ -1,15 +1,15 @@
 /** URL parameters for the reflection task (all optional). */
 
 /**
- * choice       start screen offering both (default)
- * voice_first  opens the voice recorder straight away, with a "Write instead" fallback
+ * voice_first  opens the voice recorder straight away, with a "Write instead" fallback (default)
+ * choice       start screen offering both
  * voice        audio only, no written fallback
  * text         writing only
  */
-export const MODES = ["choice", "voice_first", "voice", "text"];
+export const MODES = ["voice_first", "choice", "voice", "text"];
 
 export const DEFAULTS = {
-  mode: "choice",
+  mode: "voice_first",
   voicePrompt:
     "Talk about your day today. Try to talk without stopping for about 2 minutes, about whatever " +
     "comes to mind, as if you were sharing with a friend. Do not worry about pauses or having the " +
@@ -27,7 +27,7 @@ function positiveInt(value, fallback) {
 }
 
 /**
- * mode            choice | voice_first | voice | text (default choice; see MODES)
+ * mode            choice | voice_first | voice | text (default voice_first; see MODES)
  * prompt          instruction text shown above the recorder (plain text, never HTML)
  * image           optional image URL, shown only once the participant starts
  * max_seconds     voice recording cap (default 300)
