@@ -1,5 +1,13 @@
 /** URL parameters for the reflection task (all optional). */
 
+/**
+ * choice       start screen offering both (default)
+ * voice_first  opens the voice recorder straight away, with a "Write instead" fallback
+ * voice        audio only, no written fallback
+ * text         writing only
+ */
+export const MODES = ["choice", "voice_first", "voice", "text"];
+
 export const DEFAULTS = {
   mode: "choice",
   voicePrompt:
@@ -19,7 +27,7 @@ function positiveInt(value, fallback) {
 }
 
 /**
- * mode            voice | text | choice (default: voice, with a "write instead" fallback)
+ * mode            choice | voice_first | voice | text (default choice; see MODES)
  * prompt          instruction text shown above the recorder (plain text, never HTML)
  * image           optional image URL, shown only once the participant starts
  * max_seconds     voice recording cap (default 300)
@@ -31,7 +39,7 @@ function positiveInt(value, fallback) {
 export function parseParams(search) {
   const q = new URLSearchParams(search);
   const rawMode = q.get("mode");
-  const mode = rawMode === "voice" || rawMode === "text" ? rawMode : DEFAULTS.mode;
+  const mode = MODES.includes(rawMode) ? rawMode : DEFAULTS.mode;
   const prompt = (q.get("prompt") || "").trim();
   return {
     mode,
