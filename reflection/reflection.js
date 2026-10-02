@@ -79,7 +79,8 @@ function finish(result) {
   emit(result.summary, result.trial);
   if (!P.callbackUrl) return;
   if (tg) { setTimeout(() => tg.close(), 800); return; }
-  if (P.returnUrl) {
+  // Inside the host's launch page (iframe) the host closes the Mini App; never navigate the frame.
+  if (P.returnUrl && window.parent === window) {
     // Not a Mini App (e.g. opened in a browser): offer the way back and follow it.
     const a = document.createElement("a");
     a.className = "dl"; a.href = P.returnUrl; a.textContent = "Return to Telegram";
