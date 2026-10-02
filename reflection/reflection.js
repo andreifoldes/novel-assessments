@@ -207,22 +207,27 @@ async function startRecording() {
     voiceError(denied
       ? "Microphone access is needed to record. Allow it in your browser and try again, or write instead."
       : "Recording isn't available on this device or browser. You can write instead.");
-    $("stop").hidden = true; $("pause").textContent = "Try again"; $("pause").hidden = false;
-    $("pause").onclick = () => { $("stop").hidden = false; $("pause").onclick = togglePause; $("pause").textContent = "Pause"; startRecording(); };
+    $("begin").textContent = "Try again";
   }
 }
 
 function showVoiceUi(status) {
   voice.status = status;
   const review = status === "review";
+  const idle = status === "idle";
   $("timerWrap").classList.toggle("rec", status === "recording");
+  $("begin").hidden = !idle;
+  $("pause").hidden = idle;
+  $("stop").hidden = idle;
   $("voiceControls").hidden = review;
   $("reviewControls").hidden = !review;
   $("player").hidden = !review;
   $("wave").hidden = review;
   $("voiceHint").textContent = review
     ? "Listen back, then Save, or Redo to record again."
-    : "Tap Stop when you are done. You can listen back before saving.";
+    : idle
+      ? "Tap Start recording. Your browser will ask to use the microphone."
+      : "Tap Stop when you are done. You can listen back before saving.";
 }
 
 function togglePause() {
@@ -267,9 +272,13 @@ $("stop").onclick = stopRecording;
 $("redo").onclick = () => { if (voice.url) { URL.revokeObjectURL(voice.url); voice.url = null; } $("player").removeAttribute("src"); startRecording(); };
 $("save").onclick = saveVoice;
 
-function openVoice() {
+// `armed`: wait for a tap on "Start recording". Recording started from a tap inside this page gets
+// a running AudioContext (the waveform) and a reliable microphone prompt; starting on page load
+// does not, which is why the page opens straight into voice mode armed rather than recording.
+function openVoice(armed = false) {
   show("voice"); showImages();
   $("timer").textContent = "00:00";
+  if (armed === true) { showVoiceUi("idle"); $("begin").textContent = "Start recording"; return; }
   startRecording();
 }
 
@@ -336,10 +345,11 @@ function submitText() {
 $("submitText").onclick = submitText;
 
 // ---------- navigation ----------
-$("chooseVoice").onclick = openVoice;
+$("chooseVoice").onclick = () => openVoice();
 $("chooseText").onclick = openText;
 $("voiceToText").onclick = openText;
-$("textToVoice").onclick = openVoice;
+$("textToVoice").onclick = () => openVoice();
+$("begin").onclick = () => { $("begin").textContent = "Start recording"; startRecording(); };
 window.addEventListener("pagehide", releaseMedia);
 
 const voiceOnly = P.mode === "voice";
@@ -350,4 +360,4 @@ $("chooseVoice").hidden = textOnly;
 $("textToVoice").hidden = textOnly;
 if (P.mode === "choice") show("start");
 else if (textOnly) openText();
-else openVoice(); // voice and voice_first (the latter keeps the "Write instead" button)
+else openVoice(true); // voice and voice_first (the latter keeps the "Write instead" button)
