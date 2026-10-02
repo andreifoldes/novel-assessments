@@ -129,12 +129,29 @@ function drawWave() {
   g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--primary");
   const step = w / BARS;
   voice.bars.forEach((a, i) => {
-    const bh = Math.max(4, a * h);
+    const bh = Math.max(6, a * h);
     g.fillRect(i * step + step * 0.25, (h - bh) / 2, step * 0.5, bh);
   });
 }
 
+// Browsers keep an AudioContext "suspended" until a tap inside this page, and voice_first starts
+// recording without one (inside the host's iframe the host's tap does not count). Recording itself
+// is unaffected; only the level meter needs the context running.
+function resumeAudio() {
+  if (voice.ctx && voice.ctx.state === "suspended") voice.ctx.resume().catch(() => { /* needs a tap */ });
+}
+for (const ev of ["pointerdown", "touchstart", "keydown", "click"]) {
+  document.addEventListener(ev, resumeAudio, { passive: true });
+}
+
 function sampleWave() {
+  const waiting = voice.ctx && voice.ctx.state === "suspended";
+  if (waiting) resumeAudio();
+  if (voice.status === "recording") {
+    $("voiceHint").textContent = waiting
+      ? "Recording. Tap anywhere to show the sound level."
+      : "Tap Stop when you are done. You can listen back before saving.";
+  }
   let amp = 0;
   if (voice.analyser) {
     const buf = new Uint8Array(voice.analyser.fftSize);
@@ -165,6 +182,7 @@ async function startRecording() {
     voice.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const AC = window.AudioContext || window.webkitAudioContext;
     voice.ctx = new AC();
+    resumeAudio();
     voice.analyser = voice.ctx.createAnalyser();
     voice.analyser.fftSize = 256;
     voice.ctx.createMediaStreamSource(voice.stream).connect(voice.analyser);
