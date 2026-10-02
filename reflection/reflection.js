@@ -235,7 +235,6 @@ $("save").onclick = saveVoice;
 
 function openVoice() {
   show("voice"); showImages();
-  $("title").textContent = "Voice memo";
   $("timer").textContent = "00:00";
   startRecording();
 }
@@ -282,7 +281,6 @@ function bindTextarea() {
 function openText() {
   releaseMedia();
   show("text"); showImages();
-  $("title").textContent = "Write your answer";
   bindTextarea();
   $("area").focus();
 }
