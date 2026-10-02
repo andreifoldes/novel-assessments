@@ -42,6 +42,8 @@ jobs:
           cp -r moodline-os/dist/. /tmp/pages/moodline-os/
           mkdir -p /tmp/pages/affective-slider
           cp -r affective-slider/build/. /tmp/pages/affective-slider/
+          mkdir -p /tmp/pages/reflection
+          cp reflection/index.html reflection/reflection.js reflection/keystroke-capture.js reflection/params.js /tmp/pages/reflection/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
