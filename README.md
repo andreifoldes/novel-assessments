@@ -48,13 +48,14 @@ URL parameters (all optional):
 | `max_seconds` | Voice recording cap (default 300) |
 | `target_seconds` | Active-writing nudge target (default 120) |
 | `callback_url`, `token` | Where to send the result, and an id echoed with it |
+| `return_url` | Telegram link (`https://t.me/...` or `tg://`) to follow after sending when the page is not a Mini App |
 | `embed=1` | Also post the m2c2 `m2c2:complete` message to the parent frame |
 
 Result delivery on completion:
 - **Voice:** `POST callback_url` with the raw audio as the body; `Content-Type` is the recording's MIME type, plus `X-Duration` (seconds) and `X-Token` headers.
 - **Text:** `POST callback_url` with JSON `{"token", "data": {mode, transcript, keystroke_csv, capture_mode, active_writing_s, n_chars}}`. The log is a CSV with columns `class,hold,release,press` (seconds from the first event).
 - Without `callback_url` the result is offered as downloads.
-- Opened as a Telegram Mini App, the page closes itself after a successful send.
+- Opened as a Telegram Mini App, the page closes itself after a successful send; otherwise it follows `return_url`.
 
 ---
 

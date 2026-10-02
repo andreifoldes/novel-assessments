@@ -2,8 +2,11 @@ import { KeystrokeRecorderCore } from "./keystroke-capture.js";
 import { parseParams, safeImageUrl } from "./params.js";
 
 const P = parseParams(location.search);
-// Inside a Telegram Mini App (initData is only set there) hand control back to the chat when done.
-const tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
+// Inside a Telegram Mini App: close the webview when done. Launch data (initData) can be missing
+// after a cross-origin redirect, so a known platform or the native bridge also counts.
+const webApp = window.Telegram && window.Telegram.WebApp;
+const tg = webApp && (webApp.initData || (webApp.platform && webApp.platform !== "unknown") || window.TelegramWebviewProxy)
+  ? webApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 const $ = (id) => document.getElementById(id);
 const IDLE_GAP_MS = 8000; // longer gaps do not count as active writing time
@@ -74,7 +77,15 @@ async function send(result) {
 function finish(result) {
   $("doneMsg").textContent = "Thank you. You can return to the app.";
   emit(result.summary, result.trial);
-  if (tg && P.callbackUrl) setTimeout(() => tg.close(), 800);
+  if (!P.callbackUrl) return;
+  if (tg) { setTimeout(() => tg.close(), 800); return; }
+  if (P.returnUrl) {
+    // Not a Mini App (e.g. opened in a browser): offer the way back and follow it.
+    const a = document.createElement("a");
+    a.className = "dl"; a.href = P.returnUrl; a.textContent = "Return to Telegram";
+    $("downloads").replaceChildren(a);
+    setTimeout(() => { location.href = P.returnUrl; }, 1500);
+  }
 }
 
 function offerDownloads(result) {
