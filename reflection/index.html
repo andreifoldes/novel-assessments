@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Daily Reflection</title>
+  <style>
+    :root { --bg:#fff; --fg:#1d2230; --muted:#5d6577; --line:#d3d8e2; --primary:#2a6df4; --on-primary:#fff; --rec:#e0382f; --card:#f4f6fa; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --fg:#eef0f5; --muted:#a2a9b8; --line:#2f3646; --primary:#6b9bff; --on-primary:#0b1020; --rec:#ff6b62; --card:#1b202b; } }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    main { max-width:34rem; margin:0 auto; padding:24px 16px calc(32px + env(safe-area-inset-bottom)); }
+    h1 { font-size:1.35rem; margin:0 0 12px; }
+    .prompt { white-space:pre-line; margin:0 0 16px; }
+    .picture { display:block; max-width:100%; border-radius:12px; margin:0 0 16px; }
+    .card { background:var(--card); border-radius:20px; padding:20px; }
+    button { font:inherit; font-weight:600; border:0; border-radius:999px; padding:14px 24px; min-height:48px; cursor:pointer; background:var(--primary); color:var(--on-primary); }
+    button.secondary { background:transparent; color:var(--fg); border:2px solid var(--line); }
+    button:disabled { opacity:.45; cursor:default; }
+    button:focus-visible, textarea:focus-visible { outline:3px solid var(--primary); outline-offset:2px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
+    .timer { text-align:center; font-size:1.6rem; font-variant-numeric:tabular-nums; }
+    .dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--line); margin-right:8px; }
+    .rec .dot { background:var(--rec); animation:pulse 1.2s infinite; }
+    @media (prefers-reduced-motion: reduce) { .rec .dot { animation:none; } }
+    @keyframes pulse { 50% { opacity:.35; } }
+    canvas { display:block; width:100%; height:80px; margin:12px 0; }
+    textarea { width:100%; height:12rem; resize:none; font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
+    .bar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; margin-top:12px; }
+    .bar > div { height:100%; width:0; background:var(--primary); transition:width .5s; }
+    .hint { text-align:center; color:var(--muted); font-size:.85rem; margin:8px 0 0; min-height:1.3em; }
+    .error { color:var(--rec); text-align:center; margin:12px 0 0; }
+    [hidden] { display:none !important; }
+    a.dl { color:var(--primary); }
+  </style>
+</head>
+<body>
+<main>
+  <h1 id="title">Daily Reflection</h1>
+
+  <section id="start">
+    <p class="prompt" id="startPrompt"></p>
+    <div class="row">
+      <button id="chooseVoice">Record voice memo</button>
+      <button id="chooseText" class="secondary">Write instead</button>
+    </div>
+    <p class="hint" id="privacy">Please do not mention names, addresses or other identifying details.</p>
+  </section>
+
+  <section id="voice" hidden>
+    <p class="prompt" id="voicePrompt"></p>
+    <img id="voiceImg" class="picture" alt="" hidden>
+    <div class="card">
+      <div class="timer" id="timerWrap" aria-live="off"><span class="dot"></span><span id="timer">00:00</span></div>
+      <canvas id="wave" aria-hidden="true"></canvas>
+      <audio id="player" controls hidden style="width:100%"></audio>
+      <div class="row" id="voiceControls">
+        <button id="pause" class="secondary">Pause</button>
+        <button id="stop">Stop</button>
+      </div>
+      <div class="row" id="reviewControls" hidden>
+        <button id="redo" class="secondary">Redo</button>
+        <button id="save">Save</button>
+      </div>
+      <p class="hint" id="voiceHint">Tap Stop when you are done. You can listen back before saving.</p>
+      <p class="error" id="voiceError" role="alert" hidden></p>
+    </div>
+    <div class="row"><button id="voiceToText" class="secondary">Write instead</button></div>
+  </section>
+
+  <section id="text" hidden>
+    <p class="prompt" id="textPrompt"></p>
+    <img id="textImg" class="picture" alt="" hidden>
+    <textarea id="area" aria-label="Your answer" placeholder="Start typing your answer here…"></textarea>
+    <div class="bar" aria-hidden="true"><div id="progress"></div></div>
+    <p class="hint" id="textHint" aria-live="polite"></p>
+    <div class="row"><button id="submitText" disabled>Save</button></div>
+    <div class="row"><button id="textToVoice" class="secondary">Record voice instead</button></div>
+  </section>
+
+  <section id="done" hidden>
+    <div class="card" style="text-align:center">
+      <p id="doneMsg">Thank you. You can return to the app.</p>
+      <p id="downloads"></p>
+      <p class="error" id="sendError" role="alert" hidden></p>
+      <div class="row"><button id="retry" hidden>Retry sending</button></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="./reflection.js"></script>
+</body>
+</html>

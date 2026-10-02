@@ -72,3 +72,17 @@ jobs:
           name: moodline-os-dist
           path: moodline-os/dist/
           retention-days: 7
+
+  test-reflection:
+    name: Test (reflection)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Unit tests
+        run: node --test reflection/*.test.mjs
