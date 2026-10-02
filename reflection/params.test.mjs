@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULTS, MODES, parseParams, safeImageUrl } from "./params.js";
+import { DEFAULTS, MODES, parseParams, safeImageUrl, safeReturnUrl } from "./params.js";
 
 test("defaults", () => {
   const p = parseParams("");
@@ -31,4 +31,12 @@ test("only http(s) images are allowed", () => {
 test("all four modes are accepted, anything else falls back to voice_first", () => {
   for (const m of MODES) assert.equal(parseParams(`?mode=${m}`).mode, m);
   assert.equal(parseParams("?mode=audio").mode, "voice_first");
+});
+
+test("return_url only points back into Telegram", () => {
+  assert.equal(safeReturnUrl("https://t.me/SurreySleepBot"), "https://t.me/SurreySleepBot");
+  assert.equal(safeReturnUrl("tg://resolve?domain=SurreySleepBot"), "tg://resolve?domain=SurreySleepBot");
+  assert.equal(safeReturnUrl("https://evil.example/t.me"), "");
+  assert.equal(safeReturnUrl("javascript:alert(1)"), "");
+  assert.equal(parseParams("").returnUrl, "");
 });

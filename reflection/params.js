@@ -34,6 +34,8 @@ function positiveInt(value, fallback) {
  * target_seconds  typed "keep writing" nudge target, in active-writing seconds (default 120)
  * callback_url    where to POST the result; token is sent with it
  * token           opaque id echoed back to the callback
+ * return_url     where to send the participant after a successful send when the page is not
+ *                 running as a Telegram Mini App (https://t.me/..., https://telegram.me/... or tg://)
  * embed           1 = also emit the m2c2 `m2c2:complete` message to the parent frame
  */
 export function parseParams(search) {
@@ -49,6 +51,7 @@ export function parseParams(search) {
     maxSeconds: positiveInt(q.get("max_seconds"), DEFAULTS.maxSeconds),
     targetSeconds: positiveInt(q.get("target_seconds"), DEFAULTS.targetSeconds),
     callbackUrl: q.get("callback_url") || "",
+    returnUrl: safeReturnUrl(q.get("return_url") || ""),
     token: q.get("token") || "",
     embed: q.get("embed") === "1",
   };
@@ -59,6 +62,17 @@ export function safeImageUrl(url) {
   try {
     const u = new URL(url);
     return u.protocol === "https:" || u.protocol === "http:" ? u.href : "";
+  } catch {
+    return "";
+  }
+}
+
+/** Only links back into Telegram are followed after completion. */
+export function safeReturnUrl(url) {
+  if (url.startsWith("tg://")) return url;
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && (u.hostname === "t.me" || u.hostname === "telegram.me") ? u.href : "";
   } catch {
     return "";
   }
