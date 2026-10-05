@@ -61,10 +61,10 @@ const FACE_SIZE = 64;
  *  2–3×. Rasterize at this multiple and scale the Sprite down to compensate. */
 const FACE_RASTER_SCALE = 4;
 
-/** Track length of the vertical layout in logical pixels (≈100 mm at ~96 dpi;
- *  actual physical size depends on device DPI — canvaskit scales correctly on
- *  high-DPI screens). */
-const TRACK_LENGTH = 200;
+/** Track length of the vertical layout in logical pixels. It runs most of the
+ *  canvas height (above the hint and Submit button); the faces sit beside its
+ *  two ends instead of in line with it. */
+const V_TRACK_LENGTH = 400;
 
 /** Side margin (px) between the canvas edge and the horizontal scale. */
 const H_TRACK_MARGIN = 20;
@@ -527,8 +527,8 @@ function buildHorizontalLayout(
 }
 
 /**
- * Vertical layout: two columns, each with [face-top] — [slider] — [face-bottom]
- * Matches the VAMS (Visual Analog Mood Scales) vertical presentation.
+ * Vertical layout: two columns, each a tall slider with the faces beside its top
+ * and bottom ends. Matches the VAMS (Visual Analog Mood Scales) vertical presentation.
  * Value convention: 0 = top, 1 = bottom; callers invert for positive dimensions.
  */
 function buildVerticalLayout(
@@ -576,24 +576,36 @@ function buildVerticalLayout(
         },
       ];
 
-  const colX = [CANVAS_W / 4, (3 * CANVAS_W) / 4];
+  // Each dimension is a group: [vertical track] with a face beside each end,
+  // flush with the track's top and bottom. Group centres at ¼ and ¾ of the width.
+  const groupX = [CANVAS_W / 4, (3 * CANVAS_W) / 4];
   const centerY = CANVAS_H / 2 - 20;
+  const trackTop = centerY - V_TRACK_LENGTH / 2;
+  const trackBottom = centerY + V_TRACK_LENGTH / 2;
+
+  const thumbHalfWidth = 18;
+  const faceGap = 16; // clear of the thumb and its attention halo
+  const faceDX = thumbHalfWidth + faceGap + FACE_SIZE / 2;
+  const topFaceY = trackTop + FACE_SIZE / 2;
+  const bottomFaceY = trackBottom - FACE_SIZE / 2;
 
   dimensions.forEach((dim, i) => {
-    const x = colX[i];
+    // Shift so the track + face group is centred on the group centre
+    const trackX = groupX[i] - faceDX / 2;
+    const faceX = trackX + faceDX;
 
     // Dimension label
     scene.addChild(new Label({
       text: dim.label,
       fontSize: 14,
       fontColor: GREY_DARK,
-      position: { x, y: 60 },
+      position: { x: groupX[i], y: 60 },
     }));
 
     // Top face (high end; rasterized oversized, scaled down to FACE_SIZE)
     scene.addChild(new Sprite({
       imageName: dim.topFace,
-      position: { x, y: 110 },
+      position: { x: faceX, y: topFaceY },
       scale: 1 / FACE_RASTER_SCALE,
     }));
 
@@ -602,24 +614,24 @@ function buildVerticalLayout(
         text: dim.topText,
         fontSize: 10,
         fontColor: GREY_MID,
-        position: { x, y: 110 + FACE_SIZE / 2 + 10 },
+        position: { x: faceX, y: topFaceY + FACE_SIZE / 2 + 10 },
       }));
     }
 
     // Pulsing halo behind the thumb's start position, dismissed on first touch
-    const halo = createThumbHalo(28, { x, y: centerY });
+    const halo = createThumbHalo(28, { x: trackX, y: centerY });
     scene.addChild(halo);
 
     // Vertical slider — value 0 = top, 1 = bottom
     const vSlider = new VerticalSlider({
-      trackSize: { width: 8, height: TRACK_LENGTH },
+      trackSize: { width: 8, height: V_TRACK_LENGTH },
       trackColor: GREY_TRACK,
       thumbSize: { width: 36, height: 36 },
       thumbColor: GREY_LIGHT,
       min: 0,
       max: 1,
       value: 0.5,
-      position: { x, y: centerY },
+      position: { x: trackX, y: centerY },
     });
     scene.addChild(vSlider);
 
@@ -637,7 +649,7 @@ function buildVerticalLayout(
     // Bottom face (low end)
     scene.addChild(new Sprite({
       imageName: dim.bottomFace,
-      position: { x, y: centerY + TRACK_LENGTH / 2 + FACE_SIZE / 2 + 8 },
+      position: { x: faceX, y: bottomFaceY },
       scale: 1 / FACE_RASTER_SCALE,
     }));
 
@@ -646,7 +658,7 @@ function buildVerticalLayout(
         text: dim.bottomText,
         fontSize: 10,
         fontColor: GREY_MID,
-        position: { x, y: centerY + TRACK_LENGTH / 2 + FACE_SIZE + 18 },
+        position: { x: faceX, y: bottomFaceY + FACE_SIZE / 2 + 10 },
       }));
     }
   });
