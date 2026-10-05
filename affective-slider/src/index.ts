@@ -61,9 +61,20 @@ const FACE_SIZE = 64;
  *  2–3×. Rasterize at this multiple and scale the Sprite down to compensate. */
 const FACE_RASTER_SCALE = 4;
 
-/** Track length in logical pixels (≈100 mm at ~96 dpi; actual physical size
- *  depends on device DPI — canvaskit scales correctly on high-DPI screens). */
+/** Track length of the vertical layout in logical pixels (≈100 mm at ~96 dpi;
+ *  actual physical size depends on device DPI — canvaskit scales correctly on
+ *  high-DPI screens). */
 const TRACK_LENGTH = 200;
+
+/** Side margin (px) between the canvas edge and the horizontal scale. */
+const H_TRACK_MARGIN = 20;
+
+/** Horizontal scale spans the full canvas width minus the side margins; the
+ *  emoticon faces sit underneath its two endpoints rather than beside them. */
+const H_TRACK_LENGTH = CANVAS_W - 2 * H_TRACK_MARGIN;
+
+/** Gap (px) between the bow-tie track and the top edge of the faces below it. */
+const H_FACE_GAP = 12;
 
 /** Height (px) of the bow-tie track at its wide ends; it tapers to a point in the middle. */
 const BOWTIE_HEIGHT = 22;
@@ -378,8 +389,8 @@ function dismissThumbHalo(halo: Shape): void {
 // ── Layout builders ───────────────────────────────────────────────────────────
 
 /**
- * Horizontal layout: two rows, each with [face] — [slider] — [face]
- * Matches the original AffectiveSlider design.
+ * Horizontal layout: two rows, each a full-width bow-tie [slider] with the two
+ * emoticon faces underneath its endpoints.
  */
 function buildHorizontalLayout(
   scene: Scene,
@@ -416,7 +427,13 @@ function buildHorizontalLayout(
     position: { x: CANVAS_W / 2, y: 58 },
   }));
 
-  const rowY = [235, 410];
+  const rowY = [205, 390];
+
+  // Faces sit under the scale endpoints, their outer edges flush with the ends
+  // of the track so the scale itself can use the full canvas width.
+  const faceLowX = H_TRACK_MARGIN + FACE_SIZE / 2;
+  const faceHighX = CANVAS_W - H_TRACK_MARGIN - FACE_SIZE / 2;
+  const faceOffsetY = BOWTIE_HEIGHT / 2 + H_FACE_GAP + FACE_SIZE / 2;
 
   dimensions.forEach((dim, i) => {
     const y = rowY[i];
@@ -427,13 +444,13 @@ function buildHorizontalLayout(
       fontSize: 16,
       fontColor: GREY_DARK,
       preferredMaxLayoutWidth: 330,
-      position: { x: CANVAS_W / 2, y: y - 56 },
+      position: { x: CANVAS_W / 2, y: y - 44 },
     }));
 
     // Low-end face (rasterized oversized; scaled down to FACE_SIZE on screen)
     scene.addChild(new Sprite({
       imageName: dim.lowFace,
-      position: { x: 36, y },
+      position: { x: faceLowX, y: y + faceOffsetY },
       scale: 1 / FACE_RASTER_SCALE,
     }));
 
@@ -442,14 +459,14 @@ function buildHorizontalLayout(
         text: dim.lowText,
         fontSize: 11,
         fontColor: GREY_MID,
-        position: { x: 36, y: y + FACE_SIZE / 2 + 10 },
+        position: { x: faceLowX, y: y + faceOffsetY + FACE_SIZE / 2 + 10 },
       }));
     }
 
     // High-end face
     scene.addChild(new Sprite({
       imageName: dim.highFace,
-      position: { x: CANVAS_W - 36, y },
+      position: { x: faceHighX, y: y + faceOffsetY },
       scale: 1 / FACE_RASTER_SCALE,
     }));
 
@@ -458,17 +475,17 @@ function buildHorizontalLayout(
         text: dim.highText,
         fontSize: 11,
         fontColor: GREY_MID,
-        position: { x: CANVAS_W - 36, y: y + FACE_SIZE / 2 + 10 },
+        position: { x: faceHighX, y: y + faceOffsetY + FACE_SIZE / 2 + 10 },
       }));
     }
 
     // Bow-tie track: two filled triangles, wide at the ends and pinched at the
     // centre, matching the original AffectiveSlider gradient bar.
-    const cx = TRACK_LENGTH / 2;
+    const cx = H_TRACK_LENGTH / 2;
     const bh = BOWTIE_HEIGHT;
     const bowtiePath =
       `M 0 0 L 0 ${bh} L ${cx} ${bh / 2} Z `
-      + `M ${TRACK_LENGTH} 0 L ${TRACK_LENGTH} ${bh} L ${cx} ${bh / 2} Z`;
+      + `M ${H_TRACK_LENGTH} 0 L ${H_TRACK_LENGTH} ${bh} L ${cx} ${bh / 2} Z`;
     scene.addChild(new Shape({
       path: { pathString: bowtiePath },
       fillColor: GREY_TRACK,
@@ -484,7 +501,7 @@ function buildHorizontalLayout(
     // Interactive slider on top, with a transparent track (the bow-tie shows
     // through) and a dark round thumb. Scale 0–100 → normalized ÷100.
     const slider = new Slider({
-      trackSize: { width: TRACK_LENGTH, height: 8 },
+      trackSize: { width: H_TRACK_LENGTH, height: 8 },
       trackColor: [0, 0, 0, 0],
       thumbSize: { width: 22, height: 22 },
       thumbColor: GREY_DARK,
