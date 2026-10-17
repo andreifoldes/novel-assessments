@@ -259,7 +259,7 @@
     other.addEventListener("input", function () { S.other = other.value; renderPickBar(); });
     swap(
       h("h1", { text: "How do you feel right now?" }),
-      h("p", { "class": "lede", text: "Tap every word that describes how you feel at this moment. Pick as many as you like." }),
+      h("p", { "class": "lede", text: "Tap every word that describes how you feel at this moment. Pick as many as you like, or type a feeling of your own." }),
       list,
       h("label", { "class": "other", "for": "other", text: "Something else?" }),
       other
@@ -270,8 +270,10 @@
   function renderPickBar() {
     var n = chosen().length + (otherText() ? 1 : 0);
     $bar.textContent = "";
-    $bar.appendChild(h("span", { "class": "count", text: n === 0 ? "Nothing selected yet" : n + " selected" }));
-    $bar.appendChild(h("button", { type: "button", "class": "btn", onclick: startRating, text: n === 0 ? "None of these fit" : "Continue" }));
+    $bar.appendChild(h("span", { "class": "count", text: n === 0 ? "Pick at least one feeling" : n + " selected" }));
+    var go = h("button", { type: "button", "class": "btn", onclick: startRating, text: "Continue" });
+    if (n === 0) go.disabled = true;
+    $bar.appendChild(go);
   }
 
   function startRating() {
@@ -280,7 +282,6 @@
     var rnd = rngFor(S.seed, "rate");
     S.queue = shuffled(items.concat(extra ? ["\u0000other"] : []), rnd);
     S.idx = 0;
-    if (!S.queue.length) return finish();
     viewRate();
   }
 
@@ -390,12 +391,7 @@
       list.appendChild(h("li", {}, h("span", { "class": "w", text: cap(r.item) }), h("span", { "class": "n", text: String(r.intensity) }),
         h("div", { "class": "track" }, fill)));
     });
-    var nodes = [h("h1", { text: "Thank you" })];
-    if (rows.length) {
-      nodes.push(h("p", { "class": "lede", text: "Here is what you told us." }), list);
-    } else {
-      nodes.push(h("p", { "class": "lede", text: "You said none of these words fit right now. That is a valid answer." }));
-    }
+    var nodes = [h("h1", { text: "Thank you" }), h("p", { "class": "lede", text: "Here is what you told us." }), list];
     if (demo) {
       var pre = h("pre", { text: JSON.stringify(S.payload, null, 2) });
       nodes.push(h("details", { "class": "proto" },
