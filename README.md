@@ -73,6 +73,19 @@ Features:
 
 ---
 
+### [DMA (Distinct Mood Assessment)](dma/)
+
+A self-report of distinct emotions in two steps: the participant taps every feeling that fits from 26 adjectives (13 constructs × 2 items, adapted from the PANAS-X), then rates each chosen feeling from 1 to 10. A write-in field allows one extra feeling. Plain HTML/JS with self-hosted fonts and no build step.
+
+**[▶ Live Demo](https://andreifoldes.github.io/novel-assessments/dma/)**
+
+Features:
+- The item list and the rating order are each shuffled; `?seed=<text>` makes both orders reproducible (the bot passes one seed per prompt)
+- All ten rating values stay in one row at any width
+- `?embed=1` emits the m2c2 `m2c2:complete` message (`summary` + one `data.trials` row per rated feeling) for the iEMA bot's launch page; `?callback_url=<url>&token=<token>` POSTs `{token, data}` instead; with neither it runs as a demo and shows the payload
+
+---
+
 ## Design Principles
 
 - **Accessibility first**: WCAG 2.1 AA color contrast, ≥44px touch targets, screen-reader labels

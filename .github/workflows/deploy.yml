@@ -44,6 +44,8 @@ jobs:
           cp -r affective-slider/build/. /tmp/pages/affective-slider/
           mkdir -p /tmp/pages/reflection
           cp reflection/index.html reflection/reflection.js reflection/keystroke-capture.js reflection/params.js /tmp/pages/reflection/
+          mkdir -p /tmp/pages/dma
+          cp -r dma/. /tmp/pages/dma/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
