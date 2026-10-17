@@ -117,6 +117,10 @@
   .results .n { font: 600 18px var(--font-display); font-variant-numeric: tabular-nums; }
   .results .track { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
   .results .fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .fwd { color: var(--muted); margin: 0 0 8px; }
+  .fwdbar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .fwdbar i { display: block; height: 100%; background: var(--accent); transform-origin: left; animation: fwd linear forwards; }
+  @keyframes fwd { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .proto { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 22px; }
   .proto summary { cursor: pointer; font-weight: 600; }
   .proto p { color: var(--muted); font-size: 15px; margin: 10px 0; }
@@ -125,6 +129,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     main { animation: none; }
+    .fwdbar i { animation: none; }
     .chip, .tile, .dots i { transition: none; }
   }
 </style>
@@ -161,6 +166,7 @@
     ["stressed", "Stress"], ["overwhelmed", "Stress"]
   ];
   var MAX_OTHER = 40;
+  var FORWARD_MS = 2500; // how long the overview shows before the host is told to close this page
 
   var params = new URLSearchParams(location.search);
   var token = params.get("token") || "";
@@ -350,12 +356,34 @@
     };
   }
 
+  // The bot reads `data.trials` and `data.summary`, whichever way the result reaches it.
+  function callbackBody() {
+    return JSON.stringify({ token: token, data: { pid: S.payload.pid, trials: S.payload.data.trials, summary: S.payload.summary } });
+  }
+  function postResult() {
+    return fetch(callbackUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: callbackBody() })
+      .then(function (r) { if (!r.ok) throw new Error("status " + r.status); });
+  }
+
+  var reported = false;
+  function reportToHost() {
+    if (reported) return;
+    reported = true;
+    try { window.parent.postMessage(Object.assign({ type: "m2c2:complete" }, S.payload), "*"); }
+    catch (e) { console.warn("[dma] parent postMessage failed", e); }
+  }
+
   function finish() {
     S.payload = buildPayload();
     if (embed) {
-      try { window.parent.postMessage(Object.assign({ type: "m2c2:complete" }, S.payload), "*"); }
-      catch (e) { console.warn("[dma] parent postMessage failed", e); }
-      return viewDone();
+      // Save straight away; the host message below stays as the fallback and as the signal to close.
+      if (viaCallback) postResult().catch(function () { /* the host stores it from the message instead */ });
+      viewDone();
+      var timer = setTimeout(reportToHost, FORWARD_MS);
+      var flush = function () { clearTimeout(timer); reportToHost(); };
+      window.addEventListener("pagehide", flush);
+      document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
+      return;
     }
     if (viaCallback) return send();
     viewDone();
@@ -366,8 +394,8 @@
     $eyebrow.textContent = "Saving";
     swap(h("h1", { text: "Saving your answers" }), h("p", { "class": "lede", text: "One moment." }));
     $bar.textContent = "";
-    fetch(callbackUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: token, data: S.payload }) })
-      .then(function (r) { if (!r.ok) throw new Error("status " + r.status); viewDone(); })
+    postResult()
+      .then(viewDone)
       .catch(function () {
         S.error = "Your answers did not save. Check your connection and try again.";
         swap(
@@ -392,6 +420,11 @@
         h("div", { "class": "track" }, fill)));
     });
     var nodes = [h("h1", { text: "Thank you" }), h("p", { "class": "lede", text: "Here is what you told us." }), list];
+    if (embed) {
+      var fill = h("i", {});
+      fill.style.animationDuration = FORWARD_MS + "ms";
+      nodes.push(h("p", { "class": "fwd", text: "One moment, taking you back to Telegram." }), h("div", { "class": "fwdbar", "aria-hidden": "true" }, fill));
+    }
     if (demo) {
       var pre = h("pre", { text: JSON.stringify(S.payload, null, 2) });
       nodes.push(h("details", { "class": "proto" },
