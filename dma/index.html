@@ -176,6 +176,8 @@
   var embed = params.get("embed") === "1" && window.parent !== window;
   var demo = !embed && !viaCallback;
   var seedParam = params.get("seed");
+  // Name of the place the participant returns to ("Telegram", "WhatsApp", ...); the PWA passes none.
+  var hostName = (params.get("host") || "").trim().slice(0, 30) || "the app";
 
   // --- seeded shuffling: the same prompt (seed) always shows the same orders -----------------
   function hashString(s) {
@@ -423,7 +425,7 @@
     if (embed) {
       var fill = h("i", {});
       fill.style.animationDuration = FORWARD_MS + "ms";
-      nodes.push(h("p", { "class": "fwd", text: "One moment, taking you back to Telegram." }), h("div", { "class": "fwdbar", "aria-hidden": "true" }, fill));
+      nodes.push(h("p", { "class": "fwd", text: "One moment, taking you back to " + hostName + "." }), h("div", { "class": "fwdbar", "aria-hidden": "true" }, fill));
     }
     if (demo) {
       var pre = h("pre", { text: JSON.stringify(S.payload, null, 2) });
