@@ -9,29 +9,45 @@
     :root { --bg:#fff; --fg:#1d2230; --muted:#5d6577; --line:#d3d8e2; --primary:#2a6df4; --on-primary:#fff; --rec:#e0382f; --card:#f4f6fa; }
     @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --fg:#eef0f5; --muted:#a2a9b8; --line:#2f3646; --primary:#6b9bff; --on-primary:#0b1020; --rec:#ff6b62; --card:#1b202b; } }
     * { box-sizing: border-box; }
+    html, body { height:100%; }
     body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-    main { max-width:34rem; margin:0 auto; padding:24px 16px calc(32px + env(safe-area-inset-bottom)); }
-    h1 { font-size:1.35rem; margin:0 0 12px; }
-    .prompt { white-space:pre-line; margin:0 0 16px; }
-    .picture { display:block; max-width:100%; border-radius:12px; margin:0 0 16px; }
-    .card { background:var(--card); border-radius:20px; padding:20px; }
+    /* Same sheet as the ESMira PWA recorder: centred title, big picture, compact detail, icon controls. */
+    main { max-width:28rem; margin:0 auto; padding:16px 24px calc(24px + env(safe-area-inset-bottom)); min-height:100dvh; display:flex; flex-direction:column; }
+    main > section { display:flex; flex-direction:column; flex:1; min-height:0; }
+    [hidden] { display:none !important; }
+    h1 { font-size:1.125rem; font-weight:700; text-align:center; margin:4px 0 0; }
+    .detail { white-space:pre-line; margin:12px 0 0; color:var(--muted); font-size:.875rem; line-height:1.6; max-height:5rem; overflow-y:auto; flex-shrink:0; }
+    .picture { display:block; flex:1 1 0; min-height:0; width:calc(100% + 48px); max-width:none; margin:8px -24px 0; object-fit:contain; align-self:center; }
+    .picture[hidden] { display:none; }
+    #text .picture { flex:0 0 auto; max-height:30dvh; }
+    .spacer { flex:1; }
     button { font:inherit; font-weight:600; border:0; border-radius:999px; padding:14px 24px; min-height:48px; cursor:pointer; background:var(--primary); color:var(--on-primary); }
     button.secondary { background:transparent; color:var(--fg); border:2px solid var(--line); }
-    button:disabled { opacity:.45; cursor:default; }
+    button:disabled { opacity:.4; cursor:default; }
+    button:active { transform:scale(.95); }
     button:focus-visible, textarea:focus-visible { outline:3px solid var(--primary); outline-offset:2px; }
     .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
-    .timer { text-align:center; font-size:1.6rem; font-variant-numeric:tabular-nums; }
+    .timer { text-align:center; font-size:1rem; font-weight:600; font-variant-numeric:tabular-nums; margin-top:8px; }
+    .timer .total { color:var(--muted); font-weight:400; }
     .dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--line); margin-right:8px; }
     .rec .dot { background:var(--rec); animation:pulse 1.2s infinite; }
     @media (prefers-reduced-motion: reduce) { .rec .dot { animation:none; } }
     @keyframes pulse { 50% { opacity:.35; } }
-    canvas { display:block; width:100%; height:80px; margin:12px 0; }
-    textarea { width:100%; height:12rem; resize:none; font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
-    .bar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; margin-top:12px; }
-    .bar > div { height:100%; width:0; background:var(--primary); transition:width .5s; }
-    .hint { text-align:center; color:var(--muted); font-size:.85rem; margin:8px 0 0; min-height:1.3em; }
+    canvas { display:block; width:100%; height:48px; margin:8px 0; flex-shrink:0; }
+    .controls { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .ctl { background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:4px; width:64px; padding:6px 0; min-height:0; border-radius:12px; font-size:.75rem; font-weight:500; }
+    .ctl.strong { color:var(--fg); font-weight:600; }
+    .ctl.accent { color:var(--primary); font-weight:600; }
+    .ctl svg, .round svg { width:22px; height:22px; fill:currentColor; }
+    .round { width:96px; height:64px; padding:0; background:transparent; color:var(--primary); border:2px solid var(--line); display:flex; align-items:center; justify-content:center; }
+    .round svg { width:26px; height:26px; }
+    textarea { width:100%; flex:1; min-height:9rem; resize:none; font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:12px 14px; margin-top:16px; }
+    .bar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; margin-top:16px; flex-shrink:0; }
+    .bar > div { height:100%; width:0; background:var(--primary); opacity:.7; transition:width .5s; }
+    .hint { text-align:center; color:var(--muted); font-size:.75rem; margin:8px 0 0; min-height:1.3em; flex-shrink:0; }
     .error { color:var(--rec); text-align:center; margin:12px 0 0; }
-    [hidden] { display:none !important; }
+    .card { background:var(--card); border-radius:20px; padding:20px; margin-top:16px; }
+    .link { background:transparent; color:var(--muted); font-weight:500; font-size:.875rem; text-decoration:underline; min-height:0; padding:8px 12px; }
     a.dl { color:var(--primary); }
   </style>
 </head>
@@ -40,7 +56,8 @@
   <h1 id="title">Daily reflection task</h1>
 
   <section id="start">
-    <p class="prompt" id="startPrompt"></p>
+    <p class="detail" id="startPrompt" style="max-height:none"></p>
+    <div class="spacer"></div>
     <div class="row">
       <button id="chooseVoice">Record voice memo</button>
       <button id="chooseText" class="secondary">Write instead</button>
@@ -49,35 +66,32 @@
   </section>
 
   <section id="voice" hidden>
-    <p class="prompt" id="voicePrompt"></p>
     <img id="voiceImg" class="picture" alt="" hidden>
-    <div class="card">
-      <div class="timer" id="timerWrap" aria-live="off"><span class="dot"></span><span id="timer">00:00</span></div>
-      <canvas id="wave" aria-hidden="true"></canvas>
-      <audio id="player" controls hidden style="width:100%"></audio>
-      <div class="row" id="voiceControls">
-        <button id="begin" hidden>Start recording</button>
-        <button id="pause" class="secondary">Pause</button>
-        <button id="stop">Stop</button>
-      </div>
-      <div class="row" id="reviewControls" hidden>
-        <button id="redo" class="secondary">Redo</button>
-        <button id="save">Save</button>
-      </div>
-      <p class="hint" id="voiceHint">Tap Stop when you are done. You can listen back before saving.</p>
-      <p class="error" id="voiceError" role="alert" hidden></p>
+    <p class="detail" id="voicePrompt"></p>
+    <div class="spacer" id="voiceSpacer"></div>
+    <div class="timer" id="timerWrap" aria-live="off"><span class="dot"></span><span id="timer">00:00</span><span class="total" id="total" hidden></span></div>
+    <canvas id="wave" aria-hidden="true"></canvas>
+    <audio id="player" hidden></audio>
+    <div class="row" id="idleControls" style="margin-top:0"><button id="begin" hidden>Start recording</button></div>
+    <div class="controls" id="voiceControls">
+      <button class="ctl" id="redo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg><span>Redo</span></button>
+      <button class="round" id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+      <button class="ctl strong" id="stop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg><span>Stop</span></button>
+      <button class="ctl accent" id="save" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg><span>Save</span></button>
     </div>
-    <div class="row"><button id="voiceToText" class="secondary">Write instead</button></div>
+    <p class="hint" id="voiceHint">Tap Stop when you are done. You can listen back before saving.</p>
+    <p class="error" id="voiceError" role="alert" hidden></p>
+    <div class="row" style="margin-top:8px"><button id="voiceToText" class="link">Write instead</button></div>
   </section>
 
   <section id="text" hidden>
-    <p class="prompt" id="textPrompt"></p>
     <img id="textImg" class="picture" alt="" hidden>
+    <p class="detail" id="textPrompt"></p>
     <textarea id="area" aria-label="Your answer" placeholder="Start typing your answer here…"></textarea>
     <div class="bar" aria-hidden="true"><div id="progress"></div></div>
     <p class="hint" id="textHint" aria-live="polite"></p>
-    <div class="row"><button id="submitText" disabled>Save</button></div>
-    <div class="row"><button id="textToVoice" class="secondary">Record voice instead</button></div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button id="submitText" disabled>Save</button></div>
+    <div class="row" style="margin-top:4px"><button id="textToVoice" class="link">Record voice instead</button></div>
   </section>
 
   <section id="done" hidden>

@@ -31,6 +31,7 @@ function positiveInt(value, fallback) {
  * prompt          instruction text shown above the recorder (plain text, never HTML)
  * image           optional image URL, shown only once the participant starts
  * max_seconds     voice recording cap (default 300)
+ * min_chars      typed-fallback character floor folded into the "keep writing" nudge (default 0)
  * target_seconds  typed "keep writing" nudge target, in active-writing seconds (default 120)
  * callback_url    where to POST the result; token is sent with it
  * token           opaque id echoed back to the callback
@@ -50,6 +51,7 @@ export function parseParams(search) {
     image: q.get("image") || "",
     maxSeconds: positiveInt(q.get("max_seconds"), DEFAULTS.maxSeconds),
     targetSeconds: positiveInt(q.get("target_seconds"), DEFAULTS.targetSeconds),
+    minChars: positiveInt(q.get("min_chars"), 0),
     callbackUrl: q.get("callback_url") || "",
     returnUrl: safeReturnUrl(q.get("return_url") || ""),
     token: q.get("token") || "",

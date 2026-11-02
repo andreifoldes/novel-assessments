@@ -20,14 +20,29 @@ const fmtTime = (s) => {
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 };
 
-$("startPrompt").textContent = P.mode === "text" ? P.textPrompt : P.voicePrompt;
-$("voicePrompt").textContent = P.voicePrompt;
-$("textPrompt").textContent = P.textPrompt;
+// Like the PWA sheet: a short first line is the title, the rest is the compact instruction text.
+function splitPrompt(prompt) {
+  const lines = prompt.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length > 1 && lines[0].length <= 60) return { title: lines[0], detail: lines.slice(1).join("\n\n") };
+  return { title: "Daily reflection", detail: prompt };
+}
+const SPLIT = splitPrompt(P.mode === "text" ? P.textPrompt : P.voicePrompt);
+document.title = SPLIT.title;
+$("title").textContent = SPLIT.title;
+$("startPrompt").textContent = SPLIT.detail;
+$("voicePrompt").textContent = splitPrompt(P.voicePrompt).detail;
+$("textPrompt").textContent = splitPrompt(P.textPrompt).detail;
+const ICON = {
+  pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11z"/></svg>',
+};
+const setCenter = (icon, label) => { $("pause").innerHTML = ICON[icon]; $("pause").setAttribute("aria-label", label); };
 const imageUrl = safeImageUrl(P.image);
 const showImages = () => {
   // The picture only appears once the participant has started, like the original task.
   for (const id of ["voiceImg", "textImg"]) {
-    if (imageUrl) { $(id).src = imageUrl; $(id).hidden = false; }
+    if (imageUrl) { $(id).src = imageUrl; $(id).hidden = false; $("voiceSpacer").hidden = true; }
   }
 };
 
@@ -126,12 +141,21 @@ function drawWave() {
   const g = c.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
-  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--primary");
+  const css = getComputedStyle(document.documentElement);
+  const primary = css.getPropertyValue("--primary"), line = css.getPropertyValue("--line");
+  const review = voice.status === "review";
+  const playedBars = review && voice.duration > 0 ? Math.round(Math.min(1, ($("player").currentTime || 0) / voice.duration) * BARS) : 0;
   const step = w / BARS;
   voice.bars.forEach((a, i) => {
-    const bh = Math.max(6, a * h);
-    g.fillRect(i * step + step * 0.25, (h - bh) / 2, step * 0.5, bh);
+    const bh = Math.max(4, a * h);
+    const live = voice.status === "recording" || voice.status === "paused";
+    g.globalAlpha = live ? 0.55 + a * 0.45 : review ? (i < playedBars ? 1 : 0.5) : 0.4;
+    g.fillStyle = live || (review && i < playedBars) ? primary : line;
+    g.beginPath();
+    g.roundRect ? g.roundRect(i * step + step * 0.2, (h - bh) / 2, step * 0.6, bh, step * 0.3) : g.rect(i * step + step * 0.2, (h - bh) / 2, step * 0.6, bh);
+    g.fill();
   });
+  g.globalAlpha = 1;
 }
 
 // Browsers keep an AudioContext "suspended" until a tap inside this page, and voice_first starts
@@ -216,15 +240,17 @@ function showVoiceUi(status) {
   const review = status === "review";
   const idle = status === "idle";
   $("timerWrap").classList.toggle("rec", status === "recording");
+  $("idleControls").hidden = !idle;
   $("begin").hidden = !idle;
-  $("pause").hidden = idle;
-  $("stop").hidden = idle;
-  $("voiceControls").hidden = review;
-  $("reviewControls").hidden = !review;
-  $("player").hidden = !review;
-  $("wave").hidden = review;
+  $("voiceControls").hidden = idle;
+  $("stop").hidden = review;
+  $("save").hidden = !review;
+  $("total").hidden = !review;
+  if (review) setCenter("play", "Play recording");
+  else if (!idle) setCenter("pause", "Pause");
+  drawWave();
   $("voiceHint").textContent = review
-    ? "Listen back, then Save, or Redo to record again."
+    ? "You can play your recording back before saving, or Redo to record again."
     : idle
       ? "Tap Start recording. Your browser will ask to use the microphone."
       : "Tap Stop when you are done. You can listen back before saving.";
@@ -235,11 +261,11 @@ function togglePause() {
   if (voice.status === "recording") {
     voice.accum = voiceElapsed() * 1000; voice.startedAt = null;
     try { if (voice.rec.state === "recording") voice.rec.pause(); } catch { /* UI still freezes */ }
-    voice.status = "paused"; $("pause").textContent = "Resume"; $("timerWrap").classList.remove("rec");
+    voice.status = "paused"; setCenter("mic", "Resume"); $("timerWrap").classList.remove("rec");
   } else if (voice.status === "paused") {
     voice.startedAt = Date.now();
     try { if (voice.rec.state === "paused") voice.rec.resume(); } catch { /* ignore */ }
-    voice.status = "recording"; $("pause").textContent = "Pause"; $("timerWrap").classList.add("rec");
+    voice.status = "recording"; setCenter("pause", "Pause"); $("timerWrap").classList.add("rec");
   }
 }
 
@@ -254,7 +280,8 @@ function stopRecording() {
     if (voice.url) URL.revokeObjectURL(voice.url);
     voice.url = URL.createObjectURL(voice.blob);
     $("player").src = voice.url;
-    $("timer").textContent = fmtTime(dur);
+    $("timer").textContent = fmtTime(0);
+    $("total").textContent = ` / ${fmtTime(dur)}`;
     showVoiceUi("review");
   };
   if (voice.rec.state !== "inactive") voice.rec.stop(); else voice.rec.onstop();
@@ -267,9 +294,16 @@ function saveVoice() {
   send({ kind: "voice", blob: voice.blob, duration, trial, summary: { n_trials: 1, mode: "voice", duration_s: duration } });
 }
 
-$("pause").onclick = togglePause;
+function playPause() {
+  const a = $("player");
+  if (a.paused) { if (a.ended || a.currentTime >= voice.duration) a.currentTime = 0; a.play().catch(() => { /* needs a tap */ }); setCenter("pause", "Pause playback"); }
+  else { a.pause(); setCenter("play", "Play recording"); }
+}
+$("player").addEventListener("timeupdate", () => { $("timer").textContent = fmtTime($("player").currentTime); drawWave(); });
+$("player").addEventListener("ended", () => { setCenter("play", "Play recording"); $("timer").textContent = fmtTime(voice.duration); drawWave(); });
+$("pause").onclick = () => (voice.status === "review" ? playPause() : togglePause());
 $("stop").onclick = stopRecording;
-$("redo").onclick = () => { if (voice.url) { URL.revokeObjectURL(voice.url); voice.url = null; } $("player").removeAttribute("src"); startRecording(); };
+$("redo").onclick = () => { $("player").pause(); if (voice.url) { URL.revokeObjectURL(voice.url); voice.url = null; } $("player").removeAttribute("src"); startRecording(); };
 $("save").onclick = saveVoice;
 
 // `armed`: wait for a tap on "Start recording". Recording started from a tap inside this page gets
@@ -311,13 +345,17 @@ function bindTextarea() {
   setInterval(() => {
     if ($("text").hidden) return;
     const target = P.targetSeconds * 1000;
-    const frac = Math.min(1, typed.active / target);
+    const timeFrac = Math.min(1, typed.active / target);
+    const lenFrac = P.minChars > 0 ? Math.min(1, $("area").value.trim().length / P.minChars) : 1;
+    const frac = Math.min(timeFrac, lenFrac);
+    const lengthShort = timeFrac >= 1 && lenFrac < 1;
     $("progress").style.width = `${Math.round(frac * 100)}%`;
     const idle = typed.last != null && performance.now() - typed.last > IDLE_HINT_MS && frac < 1;
     $("textHint").textContent = idle
-      ? "Still with you? Keep writing whatever comes to mind, no need for polish."
-      : frac >= 1 ? "That's plenty. Finish whenever you're ready, or keep going."
-        : `Try to keep writing continuously for about ${Math.round(P.targetSeconds / 60) || 1} minute${P.targetSeconds >= 90 ? "s" : ""}.`;
+      ? "Still with you? Keep writing whatever comes to mind \u2014 no need for polish."
+      : frac >= 1 ? "That's plenty \u2014 finish whenever you're ready, or keep going."
+        : lengthShort ? "Almost there \u2014 a few more sentences will do."
+          : `Try to keep writing continuously for about ${P.targetSeconds >= 90 ? "two minutes" : "a minute"}.`;
   }, 500);
 }
 
