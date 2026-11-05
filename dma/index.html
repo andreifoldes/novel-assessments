@@ -94,6 +94,7 @@
   }
   .tile:active { transform: scale(.94); }
   .tile[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .word.long { font-size: clamp(28px, 8vw, 38px); line-height: 1.15; letter-spacing: -.02em; }
   .anchors { display: flex; justify-content: space-between; color: var(--muted); font-size: 14px; }
 
   .bar {
@@ -150,7 +151,7 @@
   "use strict";
 
   // 13 constructs x 2 items (Distinct Mood Assessment, adapted from the PANAS-X). Participants never see the constructs.
-  var ITEMS = [
+  var DMA_ITEMS = [
     ["energetic", "Energy"], ["active", "Energy"],
     ["attentive", "Attentiveness"], ["concentrating", "Attentiveness"],
     ["excited", "Excitement"], ["enthusiastic", "Excitement"],
@@ -165,7 +166,32 @@
     ["angry", "Hostility"], ["irritable", "Hostility"],
     ["stressed", "Stress"], ["overwhelmed", "Stress"]
   ];
+  // Presets pick the word list and wording; `?preset=` chooses one (default "dma").
+  //   dma        the 26 feelings, a write-in field, rated "how strongly do you feel this".
+  //   influences what is affecting the mood: a short list, an exclusive "None of the above", no write-in.
+  var PRESETS = {
+    dma: {
+      items: DMA_ITEMS, none: "", other: true,
+      title: "How do you feel right now?",
+      lede: "Tap every word that describes how you feel at this moment. Pick as many as you like, or type a feeling of your own.",
+      empty: "Pick at least one feeling",
+      ratePrompt: "How strongly do you feel this right now?", low: "1 = very weak", high: "10 = very strong"
+    },
+    influences: {
+      items: [
+        ["thirst / hunger", "Hunger and thirst"], ["sleepiness / sleep inertia", "Sleepiness"], ["period", "Menstrual cycle"],
+        ["physical pain", "Pain"], ["physical discomfort (e.g. cold)", "Physical discomfort"]
+      ],
+      none: "None of the above", other: false,
+      title: "What is affecting your mood?",
+      lede: "Tap everything that has been, or is now, influencing your mood or emotional state. Pick as many as apply.",
+      empty: "Pick at least one, or “None of the above”",
+      ratePrompt: "How much is this influencing your mood right now?", low: "1 = very little", high: "10 = very much"
+    }
+  };
   var MAX_OTHER = 40;
+  var NONE = "\u0000none";
+  var OTHER = "\u0000other";
   var FORWARD_MS = 2500; // how long the overview shows before the host is told to close this page
 
   var params = new URLSearchParams(location.search);
@@ -175,6 +201,9 @@
   // Embedded in the bot's launch page (?embed=1): report with the m2c2 `m2c2:complete` message.
   var embed = params.get("embed") === "1" && window.parent !== window;
   var demo = !embed && !viaCallback;
+  var presetName = params.get("preset") === "influences" ? "influences" : "dma";
+  var P = PRESETS[presetName];
+  var ITEMS = P.items;
   var seedParam = params.get("seed");
   // Name of the place the participant returns to ("Telegram", "WhatsApp", ...); the PWA passes none.
   var hostName = (params.get("host") || "").trim().slice(0, 30) || "the app";
@@ -238,7 +267,8 @@
   function cap(w) { return w.charAt(0).toUpperCase() + w.slice(1); }
   function constructOf(item) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i][0] === item) return ITEMS[i][1]; return null; }
   function chosen() { return S.listOrder.filter(function (w) { return S.picked[w]; }); }
-  function otherText() { return S.other.replace(/\s+/g, " ").trim().slice(0, MAX_OTHER); }
+  function otherText() { return P.other ? S.other.replace(/\s+/g, " ").trim().slice(0, MAX_OTHER) : ""; }
+  function noneSelected() { return !!(P.none && S.picked[NONE]); }
 
   function setDots(total, done) {
     $dots.textContent = "";
@@ -248,61 +278,66 @@
   // --- screens -------------------------------------------------------------------------------
   function viewPick() {
     S.step = "pick";
-    var picked = chosen().length;
     $eyebrow.textContent = "Right now";
     setDots(0, 0);
-    var list = h("ul", { "class": "chips", "aria-label": "Feelings" });
-    S.listOrder.forEach(function (w) {
+    var list = h("ul", { "class": "chips", "aria-label": "Options" });
+    var chips = {};
+    // "None of the above" excludes every other choice, and any other choice clears it.
+    function toggle(key) {
+      var on = !S.picked[key];
+      if (key === NONE) S.picked = {}; else S.picked[NONE] = false;
+      S.picked[key] = on;
+      Object.keys(chips).forEach(function (k) { chips[k].setAttribute("aria-pressed", S.picked[k] ? "true" : "false"); });
+      renderPickBar();
+    }
+    S.listOrder.concat(P.none ? [NONE] : []).forEach(function (w) {
       var chip = h("button", { type: "button", "class": "chip", "aria-pressed": S.picked[w] ? "true" : "false" },
-        h("span", { "class": "tick", "aria-hidden": "true", text: "✓" }), h("span", { text: cap(w) }));
-      chip.addEventListener("click", function () {
-        S.picked[w] = !S.picked[w];
-        chip.setAttribute("aria-pressed", S.picked[w] ? "true" : "false");
-        renderPickBar();
-      });
+        h("span", { "class": "tick", "aria-hidden": "true", text: "✓" }), h("span", { text: cap(w === NONE ? P.none : w) }));
+      chip.addEventListener("click", function () { toggle(w); });
+      chips[w] = chip;
       list.appendChild(h("li", {}, chip));
     });
-    var other = h("input", { "class": "other", id: "other", type: "text", maxlength: String(MAX_OTHER), autocomplete: "off",
-      placeholder: "Another feeling, if none of these fit", value: S.other });
-    other.addEventListener("input", function () { S.other = other.value; renderPickBar(); });
-    swap(
-      h("h1", { text: "How do you feel right now?" }),
-      h("p", { "class": "lede", text: "Tap every word that describes how you feel at this moment. Pick as many as you like, or type a feeling of your own." }),
-      list,
-      h("label", { "class": "other", "for": "other", text: "Something else?" }),
-      other
-    );
+    var nodes = [h("h1", { text: P.title }), h("p", { "class": "lede", text: P.lede }), list];
+    if (P.other) {
+      var other = h("input", { "class": "other", id: "other", type: "text", maxlength: String(MAX_OTHER), autocomplete: "off",
+        placeholder: "Another feeling, if none of these fit", value: S.other });
+      other.addEventListener("input", function () { S.other = other.value; renderPickBar(); });
+      nodes.push(h("label", { "class": "other", "for": "other", text: "Something else?" }), other);
+    }
+    swap.apply(null, nodes);
     renderPickBar();
   }
 
   function renderPickBar() {
-    var n = chosen().length + (otherText() ? 1 : 0);
+    var none = noneSelected();
+    var n = chosen().length + (otherText() ? 1 : 0) + (none ? 1 : 0);
     $bar.textContent = "";
-    $bar.appendChild(h("span", { "class": "count", text: n === 0 ? "Pick at least one feeling" : n + " selected" }));
-    var go = h("button", { type: "button", "class": "btn", onclick: startRating, text: "Continue" });
+    $bar.appendChild(h("span", { "class": "count", text: n === 0 ? P.empty : (none ? P.none : n + " selected") }));
+    var go = h("button", { type: "button", "class": "btn", onclick: startRating, text: none ? "Finish" : "Continue" });
     if (n === 0) go.disabled = true;
     $bar.appendChild(go);
   }
 
   function startRating() {
+    if (noneSelected()) { S.queue = [NONE]; S.idx = 0; finish(); return; } // nothing to rate
     var items = chosen();
     var extra = otherText();
     var rnd = rngFor(S.seed, "rate");
-    S.queue = shuffled(items.concat(extra ? ["\u0000other"] : []), rnd);
+    S.queue = shuffled(items.concat(extra ? [OTHER] : []), rnd);
     S.idx = 0;
     viewRate();
   }
 
-  function labelOf(key) { return key === "\u0000other" ? otherText() : key; }
+  function labelOf(key) { return key === OTHER ? otherText() : key === NONE ? P.none : key; }
 
   function viewRate() {
     S.step = "rate";
     S.viewShownAt = Date.now();
     var key = S.queue[S.idx];
     var total = S.queue.length;
-    $eyebrow.textContent = "Feeling " + (S.idx + 1) + " of " + total;
+    $eyebrow.textContent = (presetName === "dma" ? "Feeling " : "Item ") + (S.idx + 1) + " of " + total;
     setDots(total, S.idx + 1);
-    var scale = h("div", { "class": "scale", role: "radiogroup", "aria-label": "How strongly, from 1 to 10" });
+    var scale = h("div", { "class": "scale", role: "radiogroup", "aria-label": "From 1 to 10" });
     for (var v = 1; v <= 10; v++) (function (v) {
       var t = h("button", { type: "button", "class": "tile", role: "radio", "aria-checked": S.ratings[key] === v ? "true" : "false", text: String(v) });
       t.addEventListener("click", function () {
@@ -314,10 +349,10 @@
       scale.appendChild(t);
     })(v);
     swap(
-      h("p", { "class": "lede", text: "How strongly do you feel this right now?" }),
-      h("div", { "class": "word", text: cap(labelOf(key)) }),
+      h("p", { "class": "lede", text: P.ratePrompt }),
+      h("div", { "class": labelOf(key).length > 14 ? "word long" : "word", text: cap(labelOf(key)) }),
       scale,
-      h("div", { "class": "anchors" }, h("span", { text: "1 = very weak" }), h("span", { text: "10 = very strong" }))
+      h("div", { "class": "anchors" }, h("span", { text: P.low }), h("span", { text: P.high }))
     );
     renderRateBar();
   }
@@ -337,19 +372,22 @@
   // --- result --------------------------------------------------------------------------------
   function buildPayload() {
     var trials = S.queue.map(function (key, i) {
-      var isOther = key === "\u0000other";
+      var isOther = key === OTHER;
+      var isNone = key === NONE; // "None of the above": one row, nothing rated
+      var listed = !isOther && !isNone;
       return {
-        trial_index: i, item: labelOf(key), construct: isOther ? null : constructOf(key), other: isOther,
-        intensity: S.ratings[key], list_position: isOther ? null : S.listOrder.indexOf(key) + 1,
+        trial_index: i, item: labelOf(key), construct: listed ? constructOf(key) : null, other: isOther, none: isNone,
+        intensity: isNone ? null : S.ratings[key], list_position: listed ? S.listOrder.indexOf(key) + 1 : null,
         rating_position: i + 1, rt_ms: S.rt[key] == null ? null : S.rt[key]
       };
     });
     var ratings = {};
-    trials.forEach(function (t) { ratings[t.other ? "other: " + t.item : t.item] = t.intensity; });
+    trials.forEach(function (t) { if (!t.none) ratings[t.other ? "other: " + t.item : t.item] = t.intensity; });
     var finished = new Date();
     return {
       assessment: "dma", pid: params.get("pid") || "",
       summary: {
+        preset: presetName, none_selected: trials.some(function (t) { return t.none; }),
         n_trials: trials.length, ratings: ratings, other_text: otherText() || null, seed: S.seed,
         list_order: S.listOrder, started_at: S.startedAt, finished_at: finished.toISOString(),
         duration_s: +((finished - new Date(S.startedAt)) / 1000).toFixed(1)
@@ -416,6 +454,7 @@
     var rows = S.payload.data.trials.slice().sort(function (a, b) { return b.intensity - a.intensity; });
     var list = h("ul", { "class": "results" });
     rows.forEach(function (r) {
+      if (r.none) { list.appendChild(h("li", {}, h("span", { "class": "w", text: cap(r.item) }))); return; }
       var fill = h("div", { "class": "fill" });
       fill.style.width = (r.intensity * 10) + "%";
       list.appendChild(h("li", {}, h("span", { "class": "w", text: cap(r.item) }), h("span", { "class": "n", text: String(r.intensity) }),

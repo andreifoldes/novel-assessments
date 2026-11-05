@@ -82,6 +82,7 @@ A self-report of distinct emotions in two steps: the participant taps every feel
 Features:
 - The item list and the rating order are each shuffled; `?seed=<text>` makes both orders reproducible (the bot passes one seed per prompt)
 - All ten rating values stay in one row at any width
+- `?preset=` picks the word list and wording: `dma` (default, the 26 feelings) or `influences` ("What is affecting your mood?": thirst / hunger, sleepiness / sleep inertia, period, physical pain, physical discomfort, plus an exclusive "None of the above"; no write-in; rated 1–10 "how much is this influencing your mood"). Picking "None of the above" skips the rating and sends one trial with `none: true` and `intensity: null`; the summary carries `preset` and `none_selected`
 - `?embed=1` emits the m2c2 `m2c2:complete` message (`summary` + one `data.trials` row per rated feeling) for the iEMA bot's launch page; `?callback_url=<url>&token=<token>` POSTs `{token, data}` instead; with neither it runs as a demo and shows the payload
 
 ---
