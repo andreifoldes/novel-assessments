@@ -33,7 +33,7 @@ A daily-reflection task in which the participant either records a voice memo or 
 **[▶ Live Demo](https://andreifoldes.github.io/novel-assessments/reflection/)**
 
 Features:
-- Voice memo with live waveform, pause/resume, playback review, redo and a configurable cap
+- Voice memo with live waveform, pause/resume, a labelled Play button to listen back (the whole take is drawn; tap the waveform to jump), redo and a configurable cap
 - "Write instead" fallback with a soft keep-writing nudge based on active writing time
 - Works on desktop and phone keyboards (physical keydown/keyup and soft-keyboard `beforeinput` capture)
 - Optional picture shown only after the participant starts (picture-description variant)
