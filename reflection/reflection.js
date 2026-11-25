@@ -1,5 +1,6 @@
 import { KeystrokeRecorderCore } from "./keystroke-capture.js";
 import { parseParams, safeImageUrl } from "./params.js";
+import { binLevels, seekTime } from "./waveform.js";
 
 const P = parseParams(location.search);
 // Inside a Telegram Mini App: close the webview when done. Launch data (initData) can be missing
@@ -37,13 +38,15 @@ const ICON = {
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
   mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11z"/></svg>',
 };
-const setCenter = (icon, label) => { $("pause").innerHTML = ICON[icon]; $("pause").setAttribute("aria-label", label); };
+// The centre button carries a visible label: Pause / Resume while recording, Play / Pause in review.
+const setCenter = (icon, label) => { $("pauseIcon").innerHTML = ICON[icon]; $("pauseLabel").textContent = label; };
 const imageUrl = safeImageUrl(P.image);
 const showImages = () => {
   // The picture only appears once the participant has started, like the original task.
   for (const id of ["voiceImg", "textImg"]) {
     if (imageUrl) { $(id).src = imageUrl; $(id).hidden = false; $("voiceSpacer").hidden = true; }
   }
+  document.body.classList.toggle("has-picture", Boolean(imageUrl));
 };
 
 // ---------- completion ----------
@@ -124,6 +127,7 @@ $("retry").onclick = () => pending && send(pending);
 const voice = {
   stream: null, ctx: null, analyser: null, rec: null, chunks: [], tick: null,
   accum: 0, startedAt: null, status: "idle", blob: null, url: null, bars: new Array(BARS).fill(0),
+  levels: [], // every level sample of the take, so review can draw the whole recording
 };
 
 function pickMime() {
@@ -185,6 +189,7 @@ function sampleWave() {
     amp = Math.min(1, Math.sqrt(sum / buf.length) * 3.2);
   }
   voice.bars = [...voice.bars.slice(1), amp];
+  voice.levels.push(amp);
   drawWave();
 }
 
@@ -217,6 +222,7 @@ async function startRecording() {
     voice.rec.start();
     voice.accum = 0; voice.startedAt = Date.now();
     voice.bars = new Array(BARS).fill(0);
+    voice.levels = [];
     voice.tick = setInterval(() => {
       if (voice.status !== "recording") return;
       sampleWave();
@@ -240,17 +246,18 @@ function showVoiceUi(status) {
   const review = status === "review";
   const idle = status === "idle";
   $("timerWrap").classList.toggle("rec", status === "recording");
+  $("voice").classList.toggle("review", review);
   $("idleControls").hidden = !idle;
   $("begin").hidden = !idle;
   $("voiceControls").hidden = idle;
   $("stop").hidden = review;
   $("save").hidden = !review;
   $("total").hidden = !review;
-  if (review) setCenter("play", "Play recording");
+  if (review) setCenter("play", "Play");
   else if (!idle) setCenter("pause", "Pause");
   drawWave();
   $("voiceHint").textContent = review
-    ? "You can play your recording back before saving, or Redo to record again."
+    ? "Tap Play to listen back (tap the waveform to jump). Then Save, or Redo to record again."
     : idle
       ? "Tap Start recording. Your browser will ask to use the microphone."
       : "Tap Stop when you are done. You can listen back before saving.";
@@ -282,6 +289,7 @@ function stopRecording() {
     $("player").src = voice.url;
     $("timer").textContent = fmtTime(0);
     $("total").textContent = ` / ${fmtTime(dur)}`;
+    voice.bars = binLevels(voice.levels, BARS);
     showVoiceUi("review");
   };
   if (voice.rec.state !== "inactive") voice.rec.stop(); else voice.rec.onstop();
@@ -296,11 +304,25 @@ function saveVoice() {
 
 function playPause() {
   const a = $("player");
-  if (a.paused) { if (a.ended || a.currentTime >= voice.duration) a.currentTime = 0; a.play().catch(() => { /* needs a tap */ }); setCenter("pause", "Pause playback"); }
-  else { a.pause(); setCenter("play", "Play recording"); }
+  if (a.paused) {
+    if (a.ended || a.currentTime >= voice.duration) a.currentTime = 0;
+    a.play().then(() => voiceError("")).catch((e) => {
+      console.warn("[reflection] playback failed", e);
+      setCenter("play", "Play");
+      voiceError("Playback didn't start. Tap Play again; if it still fails, Save is safe: your recording is kept.");
+    });
+    setCenter("pause", "Pause");
+  } else { a.pause(); setCenter("play", "Play"); }
 }
+$("wave").addEventListener("click", (e) => {
+  if (voice.status !== "review") return;
+  const r = $("wave").getBoundingClientRect();
+  $("player").currentTime = seekTime(e.clientX - r.left, r.width, voice.duration);
+  $("timer").textContent = fmtTime($("player").currentTime);
+  drawWave();
+});
 $("player").addEventListener("timeupdate", () => { $("timer").textContent = fmtTime($("player").currentTime); drawWave(); });
-$("player").addEventListener("ended", () => { setCenter("play", "Play recording"); $("timer").textContent = fmtTime(voice.duration); drawWave(); });
+$("player").addEventListener("ended", () => { setCenter("play", "Play"); $("timer").textContent = fmtTime(voice.duration); drawWave(); });
 $("pause").onclick = () => (voice.status === "review" ? playPause() : togglePause());
 $("stop").onclick = stopRecording;
 $("redo").onclick = () => { $("player").pause(); if (voice.url) { URL.revokeObjectURL(voice.url); voice.url = null; } $("player").removeAttribute("src"); startRecording(); };
